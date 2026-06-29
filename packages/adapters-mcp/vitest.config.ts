@@ -1,7 +1,12 @@
-import { defineConfig, mergeConfig } from 'vitest/config';
-import { sharedTestDefaults } from '../../vitest.shared.js';
+import { defineConfig } from 'vitest/config';
 
-export default mergeConfig(
-  defineConfig({ test: { include: ['src/**/*.{test,spec}.ts'] } }),
-  defineConfig({ test: { ...sharedTestDefaults } }),
-);
+export default defineConfig({
+  test: {
+    environment: 'node',
+    include: ['src/**/*.{test,spec}.ts'],
+    exclude: ['dist/**', 'node_modules/**'],
+    testTimeout: 5000,
+    hookTimeout: 5000,
+    reporters: ['default'],
+  },
+});

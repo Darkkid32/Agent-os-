@@ -11,7 +11,9 @@
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src --ext .ts --max-warnings=0",
-    "test": "echo \"no tests yet\" && exit 0",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "clean": "rimraf dist"
   },
   "keywords": [
@@ -28,6 +30,7 @@
   },
   "dependencies": {
     "@agent-os/core": "workspace:*",
+    "@agent-os/hermes": "workspace:*",
     "@agent-os/shared": "workspace:*",
     "@agent-os/observability": "workspace:*",
     "@fastify/cors": "^10.0.1",
@@ -39,6 +42,7 @@
   },
   "devDependencies": {
     "@types/node": "^20.14.10",
-    "tsx": "^4.19.1"
+    "tsx": "^4.19.1",
+    "vitest": "^4.1.9"
   }
 }
