@@ -13,6 +13,11 @@
       "import": "./dist/index.js",
       "default": "./dist/index.js"
     },
+    "./test-utils": {
+      "types": "./dist/test-utils/hermes-mock.d.ts",
+      "import": "./dist/test-utils/hermes-mock.js",
+      "default": "./dist/test-utils/hermes-mock.js"
+    },
     "./package.json": "./package.json"
   },
   "files": [
@@ -24,7 +29,9 @@
     "dev": "tsc -p tsconfig.build.json --watch",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src --ext .ts --max-warnings=0",
-    "test": "echo \"no tests yet\" && exit 0",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "clean": "rimraf dist"
   },
   "keywords": [
@@ -43,5 +50,8 @@
     "@agent-os/observability": "workspace:*",
     "@agent-os/runtime": "workspace:*",
     "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "vitest": "^4.1.9"
   }
 }

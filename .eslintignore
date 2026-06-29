@@ -1,0 +1,15 @@
+dist/
+node_modules/
+coverage/
+.turbo/
+.next/
+
+# vitest config files live outside any tsconfig include but are
+# picked up by ESLint's `.cjs,.ts` extension rule. Lint these only via
+# the matching workspace tsconfig if needed; for now we exclude them
+# because they delegate to the shared config.
+vitest.config.ts
+vitest.shared.ts
+
+# Generated
+**/*.tsbuildinfo

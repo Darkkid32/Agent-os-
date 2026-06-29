@@ -36,8 +36,11 @@ export const jsonParser =
   (maxBodyBytes: number): BodyParser =>
   (rawBody, contentType) => {
     if (rawBody.byteLength > maxBodyBytes) return err(tooLargeError);
-    if (!JSON_PATTERN.test(contentType)) return err(unsupportedError(contentType));
+    // Empty bodies (e.g. GET requests) are valid JSON with `null` value.
+    // Skip the content-type gate so 0-byte payloads don't surface as
+    // "unsupported content-type" errors.
     if (rawBody.byteLength === 0) return ok({ json: null });
+    if (!JSON_PATTERN.test(contentType)) return err(unsupportedError(contentType));
     try {
       const decoded = new TextDecoder('utf-8', { fatal: true }).decode(rawBody);
       const json = JSON.parse(decoded) as unknown;

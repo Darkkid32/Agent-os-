@@ -24,7 +24,9 @@
     "dev": "tsc -p tsconfig.build.json --watch",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src --ext .ts --max-warnings=0",
-    "test": "echo \"no tests yet\" && exit 0",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "clean": "rimraf dist"
   },
   "keywords": [
@@ -41,5 +43,8 @@
     "@agent-os/core": "workspace:*",
     "@agent-os/hermes": "workspace:*",
     "grammy": "^1.36.0"
+  },
+  "devDependencies": {
+    "vitest": "^4.1.9"
   }
 }
