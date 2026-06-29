@@ -1,0 +1,50 @@
+{
+  "name": "@agent-os/plugins",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Plugin platform foundation for Agent OS — manifest, registry, lifecycle, and dependency validation.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsc -p tsconfig.build.json --watch",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --ext .ts --max-warnings=0",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "clean": "rimraf dist"
+  },
+  "keywords": [
+    "agent-os",
+    "plugins"
+  ],
+  "author": "Agent OS Maintainers",
+  "license": "Apache-2.0",
+  "agent-os": {
+    "layer": 2,
+    "audience": "internal"
+  },
+  "dependencies": {
+    "@agent-os/core": "workspace:*",
+    "@agent-os/event-bus": "workspace:*",
+    "@agent-os/observability": "workspace:*"
+  },
+  "devDependencies": {
+    "vitest": "^4.1.9"
+  }
+}
