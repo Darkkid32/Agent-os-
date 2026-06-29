@@ -50,8 +50,11 @@
     "vitest": "^4.1.9"
   },
   "lint-staged": {
-    "*.{ts,tsx,js,mjs,cjs}": [
+    "{packages,apps}/*/src/**/*.{ts,tsx,js,mjs,cjs}": [
       "eslint --max-warnings=0 --fix",
+      "prettier --write"
+    ],
+    "*.{ts,tsx,js,mjs,cjs}": [
       "prettier --write"
     ],
     "*.{json,md,yml,yaml}": [

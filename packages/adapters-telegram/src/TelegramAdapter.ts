@@ -271,8 +271,12 @@ export class TelegramAdapter {
 
   private logBotIdentity(username: string | undefined): void {
     if (username) {
-      // eslint-disable-next-line no-console
-      console.log(`[${ADAPTER_NAME} v${ADAPTER_VERSION}] polling as @${username}`);
+      // Operators route stdio transports' stdout/stderr directly to a
+      // sink. Lifecycle start banners go to stderr (console.warn) so
+      // they are visible regardless of whether the consumer is piping
+      // stdout. This is also the channel `no-console` permits without a
+      // per-line suppression.
+      console.warn(`[${ADAPTER_NAME} v${ADAPTER_VERSION}] polling as @${username}`);
     }
   }
 }

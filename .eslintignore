@@ -3,13 +3,12 @@ node_modules/
 coverage/
 .turbo/
 .next/
-
-# vitest config files live outside any tsconfig include but are
-# picked up by ESLint's `.cjs,.ts` extension rule. Lint these only via
-# the matching workspace tsconfig if needed; for now we exclude them
-# because they delegate to the shared config.
-vitest.config.ts
-vitest.shared.ts
-
-# Generated
 **/*.tsbuildinfo
+
+# Vitest scaffolding files are not source code. They are config that
+# runs against the Vitest runtime, not the monorepo tsc build. The
+# workspace lint ignores them; per-package `tsconfig.json` does the
+# same. lint-staged is configured to only operate on package source
+# files, so the root `vitest.shared.ts` is also outside its scope.
+/vitest.shared.ts
+**/vitest.config.ts
