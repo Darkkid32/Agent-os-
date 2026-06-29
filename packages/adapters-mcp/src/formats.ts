@@ -3,25 +3,31 @@
  *
  * Pure functions. Each formatter takes a Hermes value and returns a
  * `McpToolResult`. JSON pretty-print keeps the tool output readable
- * for LLM agents. Secrets in `HermesConfig` are redacted identically
- * to the Telegram formatter.
+ * for LLM agents. Secret redaction is delegated to
+ * `redactHermesConfig` from `@agent-os/hermes` (single source of
+ * truth for which fields are secret).
  */
-import type { HermesConfig, HermesHealthMonitorReport, HermesStatus } from '@agent-os/hermes';
+import {
+  type HermesConfig,
+  type HermesHealthMonitorReport,
+  type HermesStatus,
+  redactHermesConfig,
+} from '@agent-os/hermes';
 import type { McpToolResult } from './types.js';
 
-const redactConfig = (cfg: HermesConfig): Record<string, unknown> => ({
+const asJson = (payload: unknown): string => `${JSON.stringify(payload, null, 2)}\n`;
+
+const configToObject = (cfg: HermesConfig): Record<string, unknown> => ({
   NODE_ENV: cfg.nodeEnv,
   LOG_LEVEL: cfg.logLevel,
-  OPENROUTER_API_KEY: '****',
-  DATABASE_URL: '****',
-  REDIS_URL: '****',
+  OPENROUTER_API_KEY: cfg.openrouterApiKey,
+  DATABASE_URL: cfg.databaseUrl,
+  REDIS_URL: cfg.redisUrl,
   OTEL_ENABLED: cfg.otelEnabled,
   OTEL_EXPORTER_ENDPOINT: cfg.otelExporterEndpoint ?? null,
   HERMES_MODULES_DIR: cfg.hermesModulesDir,
   HERMES_SHUTDOWN_TIMEOUT_MS: cfg.hermesShutdownTimeoutMs,
 });
-
-const asJson = (payload: unknown): string => `${JSON.stringify(payload, null, 2)}\n`;
 
 export const formatStarted = (phase: string): McpToolResult => ({
   text: asJson({ started: true, phase }),
@@ -53,11 +59,11 @@ export const formatModules = (count: number): McpToolResult => ({
   data: { count },
 });
 
-export const formatConfig = (cfg: HermesConfig): McpToolResult => ({
-  text: asJson(redactConfig(cfg)),
-  isError: false,
-  data: redactConfig(cfg),
-});
+export const formatConfig = (cfg: HermesConfig): McpToolResult => {
+  const redacted = redactHermesConfig(cfg);
+  const payload = configToObject(redacted);
+  return { text: asJson(payload), isError: false, data: payload };
+};
 
 export const formatVersion = (name: string, version: string): McpToolResult => ({
   text: asJson({ name, version }),

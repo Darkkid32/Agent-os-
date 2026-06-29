@@ -6,40 +6,39 @@
  * it receives a `CliRole` from its initializer and translates it to a
  * permission set.
  *
- * The same model will be reused by the REST adapter and the Dashboard.
+ * Phase 4.2: the role/action taxonomy and the `can` predicate live in
+ * `@agent-os/core/kernel-permissions`. The CLI keeps its local
+ * `PermissionService` shape so commands continue to consume it through
+ * `ctx.permissions.can(action) / require(action)`.
  */
-import type { CommandAction } from '../interfaces/Command.js';
+import {
+  can as kernelCan,
+  type KernelAction,
+  type KernelRole,
+} from '@agent-os/core/kernel-permissions';
 import { PermissionError } from '../errors/PermissionError.js';
 
-export type CliRole = 'admin' | 'viewer';
+export type CliRole = KernelRole;
 
-const PERMISSIONS: Readonly<Record<CliRole, ReadonlySet<CommandAction>>> = {
-  admin: new Set<CommandAction>([
-    'start',
-    'stop',
-    'status',
-    'health',
-    'config',
-    'version',
-    'registerModule',
-    'unregisterModule',
-  ]),
-  viewer: new Set<CommandAction>(['status', 'health', 'config', 'version']),
-};
+/**
+ * Local action alias kept for compatibility with the pre-Phase-4.2
+ * `Command.requires` field. It is structurally identical to
+ * `KernelAction`.
+ */
+export type CommandAction = KernelAction;
 
 export interface PermissionService {
-  readonly can: (action: CommandAction) => boolean;
-  readonly require: (action: CommandAction) => void;
+  readonly can: (action: KernelAction) => boolean;
+  readonly require: (action: KernelAction) => void;
 }
 
-export const createPermissionService = (role: CliRole): PermissionService => {
-  const allowed = PERMISSIONS[role];
-  return {
-    can: (action) => allowed.has(action),
-    require: (action) => {
-      if (!allowed.has(action)) {
-        throw new PermissionError(action);
-      }
-    },
-  };
-};
+export const can = kernelCan;
+
+export const createPermissionService = (role: CliRole): PermissionService => ({
+  can: (action) => kernelCan(role, action),
+  require: (action) => {
+    if (!kernelCan(role, action)) {
+      throw new PermissionError(action);
+    }
+  },
+});

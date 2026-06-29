@@ -5,59 +5,32 @@
  *   - Admin: start, stop, plus all read-only.
  *   - Viewer: read-only (status, health, modules, config, version).
  *
- * The taxonomy is defined locally to keep the Telegram adapter
- * independent of the CLI / REST / Discord adapters. Promoting it to a
- * shared package is a Phase 4+ cleanup.
+ * Phase 4.2: the role/action taxonomy, the `can` predicate, and the
+ * `PermissionError` class live in `@agent-os/core/kernel-permissions`.
+ * The Telegram adapter keeps `roleFor` because the resolver is its
+ * own (it maps Telegram numeric user IDs to roles via the bot's admin
+ * list).
  */
 
-export type TelegramRole = 'admin' | 'viewer';
+import {
+  can as kernelCan,
+  type KernelAction,
+  type KernelRole,
+} from '@agent-os/core/kernel-permissions';
 
-export type TelegramAction =
-  'start' | 'stop' | 'status' | 'health' | 'modules' | 'config' | 'version';
+export type TelegramRole = KernelRole;
 
-const ADMIN_ACTIONS: ReadonlySet<TelegramAction> = new Set<TelegramAction>([
-  'start',
-  'stop',
-  'status',
-  'health',
-  'modules',
-  'config',
-  'version',
-]);
-
-const VIEWER_ACTIONS: ReadonlySet<TelegramAction> = new Set<TelegramAction>([
-  'status',
-  'health',
-  'modules',
-  'config',
-  'version',
-]);
-
-const PERMISSIONS: Readonly<Record<TelegramRole, ReadonlySet<TelegramAction>>> = {
-  admin: ADMIN_ACTIONS,
-  viewer: VIEWER_ACTIONS,
-};
+/**
+ * Local action alias. Telegram never emits `registerModule` /
+ * `unregisterModule` — those are Discord-only operations — but the
+ * wider type is identical to `KernelAction` and we keep the local
+ * alias for source-level compatibility with `TelegramCommand.requires`.
+ */
+export type TelegramAction = KernelAction;
 
 export const roleFor = (userId: string, adminUserIds: readonly string[]): TelegramRole =>
   adminUserIds.includes(userId) ? 'admin' : 'viewer';
 
-export const can = (role: TelegramRole, action: TelegramAction): boolean =>
-  PERMISSIONS[role].has(action);
+export const can = kernelCan;
 
-export class PermissionError extends Error {
-  public readonly action: TelegramAction;
-  public readonly role: TelegramRole;
-
-  public constructor(role: TelegramRole, action: TelegramAction) {
-    super(`TelegramAdapter: permission denied for action "${action}" with role "${role}".`);
-    this.name = 'PermissionError';
-    this.action = action;
-    this.role = role;
-  }
-}
-
-export const requireRole = (role: TelegramRole, action: TelegramAction): void => {
-  if (!can(role, action)) {
-    throw new PermissionError(role, action);
-  }
-};
+export { PermissionError, requireRole } from '@agent-os/core/kernel-permissions';

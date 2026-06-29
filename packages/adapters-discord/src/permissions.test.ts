@@ -33,7 +33,7 @@ describe('Discord permissions', () => {
     const e = new PermissionError('viewer', 'start');
     expect(e.role).toBe('viewer');
     expect(e.action).toBe('start');
-    expect(e.message).toMatch(/permission denied/i);
+    expect(e.message).toContain('denied');
     expect(e).toBeInstanceOf(Error);
   });
 });

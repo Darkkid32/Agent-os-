@@ -5,11 +5,12 @@
  * applied conservatively. The dispatcher converts TelegramMessage to a
  * grammY `ctx.reply(text, options)` call.
  */
-import type {
-  HermesConfig,
-  HermesHealthMonitorReport,
-  HermesLifecyclePhase,
-  HermesStatus,
+import {
+  type HermesConfig,
+  type HermesHealthMonitorReport,
+  type HermesLifecyclePhase,
+  type HermesStatus,
+  redactHermesConfig,
 } from '@agent-os/hermes';
 import type { TelegramMessage } from './types.js';
 
@@ -55,17 +56,20 @@ export const formatVersionMessage = (name: string, version: string): TelegramMes
   parseMode: 'MarkdownV2',
 });
 
-const redactConfig = (cfg: HermesConfig): ReadonlyArray<readonly [string, string]> => [
-  ['NODE_ENV', cfg.nodeEnv],
-  ['LOG_LEVEL', cfg.logLevel],
-  ['OPENROUTER_API_KEY', '****'],
-  ['DATABASE_URL', '****'],
-  ['REDIS_URL', '****'],
-  ['OTEL_ENABLED', String(cfg.otelEnabled)],
-  ['OTEL_EXPORTER_ENDPOINT', cfg.otelExporterEndpoint ?? '—'],
-  ['HERMES_MODULES_DIR', cfg.hermesModulesDir],
-  ['HERMES_SHUTDOWN_TIMEOUT_MS', String(cfg.hermesShutdownTimeoutMs)],
-];
+const redactConfig = (cfg: HermesConfig): ReadonlyArray<readonly [string, string]> => {
+  const r = redactHermesConfig(cfg);
+  return [
+    ['NODE_ENV', r.nodeEnv],
+    ['LOG_LEVEL', r.logLevel],
+    ['OPENROUTER_API_KEY', r.openrouterApiKey],
+    ['DATABASE_URL', r.databaseUrl],
+    ['REDIS_URL', r.redisUrl],
+    ['OTEL_ENABLED', String(r.otelEnabled)],
+    ['OTEL_EXPORTER_ENDPOINT', r.otelExporterEndpoint ?? '—'],
+    ['HERMES_MODULES_DIR', r.hermesModulesDir],
+    ['HERMES_SHUTDOWN_TIMEOUT_MS', String(r.hermesShutdownTimeoutMs)],
+  ];
+};
 
 export const formatConfigMessage = (cfg: HermesConfig): TelegramMessage => {
   const rows = redactConfig(cfg)

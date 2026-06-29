@@ -15,6 +15,8 @@ export { createHermesBuilder, HermesBuilder } from './HermesBuilder.js';
 export { validateConfig } from './HermesConfig.js';
 export type { HermesConfig, HermesConfigInput, HermesEnvironment } from './HermesConfig.js';
 
+export { redactHermesConfig } from './redact.js';
+
 export { createHermesContainer } from './HermesContainer.js';
 export type { HermesContainer } from './HermesContainer.js';
 

@@ -29,10 +29,13 @@ const PACKAGE_SLUGS = [
   'event-bus',
   'observability',
   'agents',
-  'adapters-sdk',
-  'adapters',
   'ui',
   'hermes',
+  'adapters-cli',
+  'adapters-discord',
+  'adapters-telegram',
+  'adapters-webhook',
+  'adapters-mcp',
 ] as const;
 
 const APP_SLUGS = ['api', 'dashboard'] as const;

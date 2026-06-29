@@ -12,20 +12,17 @@ import type { Result } from '@agent-os/core';
 import type { CliContext } from '../types/CliContext.js';
 import type { CommandError } from '../errors/CommandError.js';
 
+import type { KernelAction } from '@agent-os/core/kernel-permissions';
+
 /**
- * Action a command needs permission to perform. The mapping is owned by
- * the permission service (see services/Permissions.ts). Commands never
- * inspect API keys or roles directly; they ask the context.
+ * Action a command needs permission to perform. Phase 4.2 lifted the
+ * canonical taxonomy into `@agent-os/core/kernel-permissions`. This
+ * alias is kept for backward compatibility with `Command.requires`.
+ * The CLI never asks for actions it does not surface to operators,
+ * but the wider set allows future commands to opt in without an
+ * adapter-package change.
  */
-export type CommandAction =
-  | 'start'
-  | 'stop'
-  | 'status'
-  | 'health'
-  | 'config'
-  | 'version'
-  | 'registerModule'
-  | 'unregisterModule';
+export type CommandAction = KernelAction;
 
 export interface CommandArgs {
   readonly positional: readonly string[];

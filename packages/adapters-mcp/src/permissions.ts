@@ -1,54 +1,26 @@
 /**
  * MCP permissions.
  *
- * Mirrors the CLI / Discord / Telegram taxonomy without depending on
- * any of them. Two roles, seven actions, one resolver. Phase 4 will
- * consolidate.
+ * Phase 4.2: the role/action taxonomy, the `can` predicate, and the
+ * `PermissionError` class live in `@agent-os/core/kernel-permissions`.
+ * The MCP adapter keeps no local permission surface; its role
+ * resolution is owned by `McpAdapter.resolveRole` which remains in
+ * the composition root.
  */
 
-export type McpRole = 'admin' | 'viewer';
+import {
+  can as kernelCan,
+  type KernelAction,
+  type KernelRole,
+} from '@agent-os/core/kernel-permissions';
 
-export type McpAction = 'start' | 'stop' | 'status' | 'health' | 'modules' | 'config' | 'version';
+export type McpRole = KernelRole;
 
-const ADMIN_ACTIONS: ReadonlySet<McpAction> = new Set<McpAction>([
-  'start',
-  'stop',
-  'status',
-  'health',
-  'modules',
-  'config',
-  'version',
-]);
+/**
+ * Local action alias kept for compatibility with `McpToolDefinition.requires`.
+ */
+export type McpAction = KernelAction;
 
-const VIEWER_ACTIONS: ReadonlySet<McpAction> = new Set<McpAction>([
-  'status',
-  'health',
-  'modules',
-  'config',
-  'version',
-]);
+export const can = kernelCan;
 
-const PERMISSIONS: Readonly<Record<McpRole, ReadonlySet<McpAction>>> = {
-  admin: ADMIN_ACTIONS,
-  viewer: VIEWER_ACTIONS,
-};
-
-export const can = (role: McpRole, action: McpAction): boolean => PERMISSIONS[role].has(action);
-
-export class PermissionError extends Error {
-  public readonly action: McpAction;
-  public readonly role: McpRole;
-
-  public constructor(role: McpRole, action: McpAction) {
-    super(`McpAdapter: permission denied for action "${action}" with role "${role}".`);
-    this.name = 'PermissionError';
-    this.action = action;
-    this.role = role;
-  }
-}
-
-export const requireRole = (role: McpRole, action: McpAction): void => {
-  if (!can(role, action)) {
-    throw new PermissionError(role, action);
-  }
-};
+export { PermissionError, requireRole } from '@agent-os/core/kernel-permissions';
