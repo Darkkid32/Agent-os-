@@ -1,27 +1,73 @@
 /**
  * @agent-os/observability
  *
- * OpenTelemetry wiring. Phase 1.1 provides a no-op default tracer plus a
- * place-holder bootstrap. Real exporters land in Phase 2.
+ * Platform observability foundation for Agent OS.
+ * Structured logging, request/correlation IDs, tracing, and metrics.
+ *
+ * Layer: 2 (Platform)
+ * Dependencies: @agent-os/core (Result, Timestamp), @opentelemetry/api (Tracer)
  */
-
-import { trace, type Tracer } from '@opentelemetry/api';
 
 export const PACKAGE_NAME = '@agent-os/observability' as const;
 export const PACKAGE_VERSION = '0.1.0' as const;
 
-export const DEFAULT_TRACER_NAME = '@agent-os/observability' as const;
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
 
-export const getTracer = (): Tracer => trace.getTracer(DEFAULT_TRACER_NAME);
+export type {
+  LogLevel,
+  LogEntry,
+  LogSink,
+  LoggerConfig,
+  ObservabilityContext,
+  MetricOptions,
+  Counter,
+  Histogram,
+  Gauge,
+  Tracer,
+  Span,
+  SpanStatusCode,
+} from './types.js';
 
-export interface ObservabilityConfig {
-  readonly serviceName: string;
-  readonly environment: 'development' | 'production' | 'test';
-  readonly enabled: boolean;
-}
+export { compareLogLevels, isLevelEnabled } from './types.js';
 
-export const defaultConfig: ObservabilityConfig = {
-  serviceName: 'agent-os',
-  environment: 'development',
-  enabled: false,
-};
+// ---------------------------------------------------------------------------
+// Context — request / correlation ID propagation
+// ---------------------------------------------------------------------------
+
+export {
+  runWithContext,
+  currentContext,
+  generateRequestId,
+  generateCorrelationId,
+  createContext,
+} from './context.js';
+
+// ---------------------------------------------------------------------------
+// Logger — structured JSON logging with pluggable sinks
+// ---------------------------------------------------------------------------
+
+export { Logger, createLogger } from './logger.js';
+
+// ---------------------------------------------------------------------------
+// Sinks — built-in log destinations
+// ---------------------------------------------------------------------------
+
+export { createConsoleSink, createNullSink, createArraySink } from './sinks.js';
+
+export type { ArraySink } from './sinks.js';
+
+// ---------------------------------------------------------------------------
+// Metrics — in-memory counter / histogram / gauge
+// ---------------------------------------------------------------------------
+
+export { createMetricRegistry } from './metrics.js';
+
+export type { MetricRegistry, MetricEntry } from './metrics.js';
+
+// ---------------------------------------------------------------------------
+// Tracer — OpenTelemetry wrapper
+// ---------------------------------------------------------------------------
+
+export { getTracer, withSpan, setSpanAttributes, currentTraceId, currentSpanId } from './tracer.js';
