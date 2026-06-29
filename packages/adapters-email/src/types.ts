@@ -17,7 +17,7 @@ import type {
 } from '@agent-os/core/adapter-metadata';
 import type { HermesPort } from '@agent-os/hermes';
 import type { Result } from '@agent-os/core';
-import type { Logger } from '@agent-os/observability';
+import type { Logger, MetricRegistry } from '@agent-os/observability';
 import type { EmailAction, EmailRole } from './permissions.js';
 
 export type EmailAdapterMode = 'imap-polling' | 'ses-webhook';
@@ -94,6 +94,7 @@ export interface EmailInitConfig {
   readonly imap: EmailImapConfig | undefined;
   readonly ses: EmailSesConfig | undefined;
   readonly logger?: Logger;
+  readonly metricRegistry?: MetricRegistry;
 }
 
 export type EmailMetadata = AdapterMetadata & {

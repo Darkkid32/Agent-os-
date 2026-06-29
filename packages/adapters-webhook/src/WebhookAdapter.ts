@@ -24,7 +24,14 @@
  */
 import { now as coreNow } from '@agent-os/core';
 import type { HermesPort } from '@agent-os/hermes';
-import { type Logger, createLogger, withSpan } from '@agent-os/observability';
+import {
+  type Logger,
+  createLogger,
+  withSpan,
+  createMetricRegistry,
+  createAdapterMetrics,
+  type AdapterMetrics,
+} from '@agent-os/observability';
 
 import {
   type BodyParser,
@@ -67,6 +74,7 @@ export class WebhookAdapter {
   private readonly signatureHeader: string | undefined;
   private readonly signatureVerifier: SignatureVerifier | undefined;
   private readonly logger: Logger;
+  private readonly metrics: AdapterMetrics;
 
   private initialized: boolean;
   private lastError: string | undefined;
@@ -74,12 +82,13 @@ export class WebhookAdapter {
   public constructor(hermes: HermesPort, config: WebhookAdapterConfig) {
     this.hermes = hermes;
     this.routes = config.routes;
-    this.parser = config.parser ?? jsonParser(config.maxBodyBytes ?? DEFAULT_MAX_BODY_BYTES);
     this.maxBodyBytes = config.maxBodyBytes ?? DEFAULT_MAX_BODY_BYTES;
     this.timeoutMs = config.timeoutMs ?? DEFAULT_TIMEOUT_MS;
-    this.signatureHeader = config.signatures?.header.toLowerCase();
+    this.parser = config.parser ?? jsonParser(this.maxBodyBytes);
+    this.signatureHeader = config.signatures?.header;
     this.signatureVerifier = config.signatures?.verifier;
     this.logger = (config.logger ?? createLogger()).child('webhook');
+    this.metrics = createAdapterMetrics(config.metricRegistry ?? createMetricRegistry(), 'webhook');
     this.initialized = false;
   }
 
@@ -132,8 +141,13 @@ export class WebhookAdapter {
     return withSpan('webhook.handle', async (span) => {
       span.setAttribute('method', req.method);
       span.setAttribute('url', req.url);
+      this.metrics.requestsTotal.inc();
+      this.metrics.activeRequests.set(this.metrics.activeRequests.getValue() + 1);
+      const startMs = performance.now();
 
       if (!this.initialized) {
+        this.metrics.activeRequests.set(Math.max(0, this.metrics.activeRequests.getValue() - 1));
+        this.metrics.errorsTotal.inc();
         return internalErrorResponse(`${ADAPTER_NAME}: not initialized`);
       }
 
@@ -142,6 +156,8 @@ export class WebhookAdapter {
         parsed = await this.parseRequest(req);
       } catch (e) {
         this.lastError = toHandlerError(e).message;
+        this.metrics.activeRequests.set(Math.max(0, this.metrics.activeRequests.getValue() - 1));
+        this.metrics.errorsTotal.inc();
         this.logger.error('request parse failed', { error: this.lastError });
         return internalErrorResponse(toHandlerError(e).message);
       }
@@ -149,11 +165,15 @@ export class WebhookAdapter {
       if (this.signatureVerifier && this.signatureHeader) {
         const headerValue = parsed.headers.get(this.signatureHeader);
         if (!headerValue) {
+          this.metrics.activeRequests.set(Math.max(0, this.metrics.activeRequests.getValue() - 1));
+          this.metrics.errorsTotal.inc();
           this.logger.warn('signature header missing');
           return unauthorizedResponse('signature header missing');
         }
         const verifyResult = this.signatureVerifier(parsed.raw, parsed.headers);
         if (!verifyResult.ok) {
+          this.metrics.activeRequests.set(Math.max(0, this.metrics.activeRequests.getValue() - 1));
+          this.metrics.errorsTotal.inc();
           this.logger.warn('signature verification failed', { error: verifyResult.error.message });
           return unauthorizedResponse(verifyResult.error.message);
         }
@@ -162,6 +182,7 @@ export class WebhookAdapter {
       const url = new URL(req.url);
       const match = matchRoute(this.routes, req.method, url.pathname);
       if (!match.ok) {
+        this.metrics.activeRequests.set(Math.max(0, this.metrics.activeRequests.getValue() - 1));
         const e = match.error;
         if (e.code === 'METHOD_NOT_ALLOWED' && e.allow) {
           return methodNotAllowedResponse(e.allow as readonly string[], e.message);
@@ -179,6 +200,8 @@ export class WebhookAdapter {
         );
       } catch (e) {
         this.lastError = toHandlerError(e).message;
+        this.metrics.activeRequests.set(Math.max(0, this.metrics.activeRequests.getValue() - 1));
+        this.metrics.errorsTotal.inc();
         this.logger.error('handler failed', {
           route: match.value.route.path,
           error: this.lastError,
@@ -186,7 +209,10 @@ export class WebhookAdapter {
         return internalErrorResponse(toHandlerError(e).message);
       }
 
+      this.metrics.activeRequests.set(Math.max(0, this.metrics.activeRequests.getValue() - 1));
+      this.metrics.requestDurationMs.observe(performance.now() - startMs);
       if (handlerResult.ok) return fromResponseBody(handlerResult.value);
+      this.metrics.errorsTotal.inc();
       return errorResponse(handlerResult.error, statusFor(handlerResult.error));
     });
   }

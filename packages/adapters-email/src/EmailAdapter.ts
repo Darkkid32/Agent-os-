@@ -26,7 +26,14 @@
  */
 import type { HermesPort } from '@agent-os/hermes';
 import { now as coreNow } from '@agent-os/core';
-import { type Logger, createLogger, withSpan } from '@agent-os/observability';
+import {
+  type Logger,
+  createLogger,
+  withSpan,
+  createMetricRegistry,
+  createAdapterMetrics,
+  type AdapterMetrics,
+} from '@agent-os/observability';
 
 import {
   type CommandError,
@@ -103,6 +110,7 @@ export class EmailAdapter {
   private readonly initConfig: EmailInitConfig;
   private readonly commands: readonly EmailCommand[];
   private readonly logger: Logger;
+  private readonly metrics: AdapterMetrics;
 
   private started: boolean;
   private lastError: string | undefined;
@@ -114,6 +122,7 @@ export class EmailAdapter {
     this.resolvedAdminEmails = init.adminEmails;
     this.commands = COMMANDS;
     this.logger = (init.logger ?? createLogger()).child('email');
+    this.metrics = createAdapterMetrics(init.metricRegistry ?? createMetricRegistry(), 'email');
     this.metadata = {
       name: ADAPTER_NAME,
       version: ADAPTER_VERSION,
@@ -203,8 +212,13 @@ export class EmailAdapter {
   public async handleMessage(senderEmail: string, subject: string): Promise<EmailMessage> {
     return withSpan('email.handleMessage', async (span) => {
       span.setAttribute('sender_email', senderEmail);
+      this.metrics.requestsTotal.inc();
+      this.metrics.activeRequests.set(this.metrics.activeRequests.getValue() + 1);
+      const startMs = performance.now();
 
       if (!this.started) {
+        this.metrics.activeRequests.set(Math.max(0, this.metrics.activeRequests.getValue() - 1));
+        this.metrics.errorsTotal.inc();
         return replyWithError({ code: 'INTERNAL', message: 'Adapter not started.' });
       }
 
@@ -212,6 +226,9 @@ export class EmailAdapter {
       const parsed = parseEmailSubject(subject, this.initConfig.commandPrefix);
 
       if (!parsed || !isKnownCommand(parsed.command)) {
+        span.setAttribute('success', 'false');
+        this.metrics.activeRequests.set(Math.max(0, this.metrics.activeRequests.getValue() - 1));
+        this.metrics.errorsTotal.inc();
         this.logger.warn('unknown command', { senderEmail });
         return replyWithError({
           code: 'VALIDATION',
@@ -221,6 +238,9 @@ export class EmailAdapter {
 
       const cmd = this.commands.find((c) => c.name === parsed.command);
       if (!cmd) {
+        span.setAttribute('success', 'false');
+        this.metrics.activeRequests.set(Math.max(0, this.metrics.activeRequests.getValue() - 1));
+        this.metrics.errorsTotal.inc();
         this.logger.warn('unknown command', { command: parsed.command, senderEmail });
         return replyWithError({
           code: 'VALIDATION',
@@ -242,9 +262,15 @@ export class EmailAdapter {
         requireRole(role, cmd.requires);
       } catch (err) {
         if (isPermissionError(err)) {
+          span.setAttribute('success', 'false');
+          this.metrics.activeRequests.set(Math.max(0, this.metrics.activeRequests.getValue() - 1));
+          this.metrics.errorsTotal.inc();
           this.logger.warn('permission denied', { command: cmd.name, senderEmail });
           return replyWithPermission(cmd.name);
         }
+        span.setAttribute('success', 'false');
+        this.metrics.activeRequests.set(Math.max(0, this.metrics.activeRequests.getValue() - 1));
+        this.metrics.errorsTotal.inc();
         return replyWithError(toCommandError(err));
       }
 
@@ -254,14 +280,24 @@ export class EmailAdapter {
         result = await cmd.handler(ectx, args);
       } catch (err) {
         this.lastError = err instanceof Error ? err.message : String(err);
+        span.setAttribute('success', 'false');
+        this.metrics.activeRequests.set(Math.max(0, this.metrics.activeRequests.getValue() - 1));
+        this.metrics.errorsTotal.inc();
         this.logger.error('command failed', { command: cmd.name, error: this.lastError });
         return replyWithError(toCommandError(err));
       }
 
       if (result.ok) {
+        span.setAttribute('success', 'true');
+        this.metrics.activeRequests.set(Math.max(0, this.metrics.activeRequests.getValue() - 1));
+        this.metrics.commandsTotal.inc();
+        this.metrics.commandDurationMs.observe(performance.now() - startMs);
         this.logger.info('command end', { command: cmd.name, success: true });
         return replyWithMessage(result.value);
       }
+      span.setAttribute('success', 'false');
+      this.metrics.activeRequests.set(Math.max(0, this.metrics.activeRequests.getValue() - 1));
+      this.metrics.errorsTotal.inc();
       this.logger.info('command end', { command: cmd.name, success: false });
       return replyWithError(result.error);
     });

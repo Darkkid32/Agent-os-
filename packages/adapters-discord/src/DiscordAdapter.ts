@@ -34,7 +34,14 @@ import {
 } from 'discord.js';
 import type { HermesPort } from '@agent-os/hermes';
 import { now as coreNow } from '@agent-os/core';
-import { type Logger, createLogger, withSpan } from '@agent-os/observability';
+import {
+  type Logger,
+  createLogger,
+  withSpan,
+  createMetricRegistry,
+  createAdapterMetrics,
+  type AdapterMetrics,
+} from '@agent-os/observability';
 import {
   type DiscordCommand,
   type DiscordContext,
@@ -65,6 +72,7 @@ interface RuntimeState {
   readonly client: Client<true>;
   readonly commands: ReadonlyMap<string, DiscordCommand>;
   readonly logger: Logger;
+  readonly metrics: AdapterMetrics;
 }
 
 export interface DiscordAdapter {
@@ -134,12 +142,17 @@ export const createDiscordAdapter = (): DiscordAdapter => {
     s: RuntimeState,
   ): Promise<void> => {
     return withSpan(`discord.${interaction.commandName}`, async (span) => {
+      const startMs = performance.now();
       const commandName = interaction.commandName;
       const command = s.commands.get(commandName);
       span.setAttribute('command', commandName);
       span.setAttribute('user_id', interaction.user.id);
+      s.metrics.requestsTotal.inc();
+      s.metrics.activeRequests.set(s.metrics.activeRequests.getValue() + 1);
 
       if (!command) {
+        span.setAttribute('success', 'false');
+        s.metrics.activeRequests.set(Math.max(0, s.metrics.activeRequests.getValue() - 1));
         s.logger.warn('unknown command', { command: commandName });
         await interaction.reply(toInteractionReplyOptions(formatUnknownMessage(commandName)));
         return;
@@ -148,6 +161,9 @@ export const createDiscordAdapter = (): DiscordAdapter => {
       const ctx = buildContext(s.hermes, interaction.user.id, s.adminUserIds);
 
       if (!can(ctx.role, command.requires)) {
+        span.setAttribute('success', 'false');
+        s.metrics.activeRequests.set(Math.max(0, s.metrics.activeRequests.getValue() - 1));
+        s.metrics.errorsTotal.inc();
         s.logger.warn('permission denied', { command: commandName, userId: interaction.user.id });
         await interaction.reply(
           toInteractionReplyOptions(formatPermissionMessage(command.requires)),
@@ -161,11 +177,13 @@ export const createDiscordAdapter = (): DiscordAdapter => {
         >,
       };
 
+      s.metrics.activeCommands.set(s.metrics.activeCommands.getValue() + 1);
       s.logger.info('command start', { command: commandName, userId: interaction.user.id });
 
       try {
         const reply = await command.handler(ctx, args);
         await interaction.reply(toInteractionReplyOptions(reply));
+        span.setAttribute('success', 'true');
         s.logger.info('command end', { command: commandName, success: true });
       } catch (e) {
         const message =
@@ -174,6 +192,8 @@ export const createDiscordAdapter = (): DiscordAdapter => {
             : e instanceof Error
               ? e.message
               : String(e);
+        span.setAttribute('success', 'false');
+        s.metrics.errorsTotal.inc();
         s.logger.error('command failed', { command: commandName, error: message });
         const errorReply = toInteractionReplyOptions(formatErrorMessage(message));
         if (interaction.deferred || interaction.replied) {
@@ -188,6 +208,11 @@ export const createDiscordAdapter = (): DiscordAdapter => {
         } else {
           await interaction.reply(errorReply);
         }
+      } finally {
+        s.metrics.activeCommands.set(Math.max(0, s.metrics.activeCommands.getValue() - 1));
+        s.metrics.activeRequests.set(Math.max(0, s.metrics.activeRequests.getValue() - 1));
+        s.metrics.commandsTotal.inc();
+        s.metrics.commandDurationMs.observe(performance.now() - startMs);
       }
     });
   };
@@ -231,6 +256,7 @@ export const createDiscordAdapter = (): DiscordAdapter => {
         client: client as unknown as Client<true>,
         commands,
         logger: adapterLogger,
+        metrics: createAdapterMetrics(config.metricRegistry ?? createMetricRegistry(), 'discord'),
       };
 
       adapterLogger.info('initialized');

@@ -29,7 +29,14 @@
 import { Bot, webhookCallback, type Context } from 'grammy';
 import type { HermesPort } from '@agent-os/hermes';
 import { now as coreNow } from '@agent-os/core';
-import { type Logger, createLogger, withSpan } from '@agent-os/observability';
+import {
+  type Logger,
+  createLogger,
+  withSpan,
+  createMetricRegistry,
+  createAdapterMetrics,
+  type AdapterMetrics,
+} from '@agent-os/observability';
 
 import {
   type CommandError,
@@ -116,6 +123,7 @@ export class TelegramAdapter {
   private readonly transport: TelegramTransport;
   private readonly commands: readonly TelegramCommand[];
   private readonly logger: Logger;
+  private readonly metrics: AdapterMetrics;
 
   private bot: Bot | undefined;
   private started: boolean;
@@ -130,6 +138,7 @@ export class TelegramAdapter {
     this.resolvedAdminUserIds = init.adminUserIds;
     this.commands = COMMANDS;
     this.logger = (init.logger ?? createLogger()).child('telegram');
+    this.metrics = createAdapterMetrics(init.metricRegistry ?? createMetricRegistry(), 'telegram');
     this.metadata = {
       name: ADAPTER_NAME,
       version: ADAPTER_VERSION,
@@ -236,10 +245,13 @@ export class TelegramAdapter {
 
   private async dispatchCommand(ctx: Context, cmd: TelegramCommand): Promise<void> {
     return withSpan(`telegram.${cmd.name}`, async (span) => {
+      const startMs = performance.now();
       const userId = userIdOf(ctx);
       const role = roleFor(userId, this.resolvedAdminUserIds);
       span.setAttribute('command', cmd.name);
       span.setAttribute('user_id', userId);
+      this.metrics.requestsTotal.inc();
+      this.metrics.activeRequests.set(this.metrics.activeRequests.getValue() + 1);
       this.logger.info('command start', { command: cmd.name, userId });
       const tctx: TelegramContext = {
         hermes: this.hermes,
@@ -253,10 +265,16 @@ export class TelegramAdapter {
         requireRole(role, cmd.requires);
       } catch (err) {
         if (isPermissionError(err)) {
+          span.setAttribute('success', 'false');
+          this.metrics.activeRequests.set(Math.max(0, this.metrics.activeRequests.getValue() - 1));
+          this.metrics.errorsTotal.inc();
           this.logger.warn('permission denied', { command: cmd.name, userId });
           await replyWithPermission(ctx, cmd.name);
           return;
         }
+        span.setAttribute('success', 'false');
+        this.metrics.activeRequests.set(Math.max(0, this.metrics.activeRequests.getValue() - 1));
+        this.metrics.errorsTotal.inc();
         await replyWithError(ctx, toCommandError(err));
         return;
       }
@@ -267,16 +285,26 @@ export class TelegramAdapter {
         result = await cmd.handler(tctx, args);
       } catch (err) {
         this.lastError = err instanceof Error ? err.message : String(err);
+        span.setAttribute('success', 'false');
+        this.metrics.activeRequests.set(Math.max(0, this.metrics.activeRequests.getValue() - 1));
+        this.metrics.errorsTotal.inc();
         this.logger.error('command failed', { command: cmd.name, error: this.lastError });
         await replyWithError(ctx, toCommandError(err));
         return;
       }
 
       if (result.ok) {
+        span.setAttribute('success', 'true');
+        this.metrics.activeRequests.set(Math.max(0, this.metrics.activeRequests.getValue() - 1));
+        this.metrics.commandsTotal.inc();
+        this.metrics.commandDurationMs.observe(performance.now() - startMs);
         this.logger.info('command end', { command: cmd.name, success: true });
         await replyWithMessage(ctx, result.value);
         return;
       }
+      span.setAttribute('success', 'false');
+      this.metrics.activeRequests.set(Math.max(0, this.metrics.activeRequests.getValue() - 1));
+      this.metrics.errorsTotal.inc();
       this.logger.info('command end', { command: cmd.name, success: false });
       await replyWithError(ctx, result.error);
     });

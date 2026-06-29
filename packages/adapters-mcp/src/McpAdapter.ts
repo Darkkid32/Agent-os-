@@ -27,7 +27,14 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import type { HermesPort } from '@agent-os/hermes';
 import { now as coreNow } from '@agent-os/core';
-import { type Logger, createLogger, withSpan } from '@agent-os/observability';
+import {
+  type Logger,
+  createLogger,
+  withSpan,
+  createMetricRegistry,
+  createAdapterMetrics,
+  type AdapterMetrics,
+} from '@agent-os/observability';
 
 import {
   type McpAdapterHealth,
@@ -71,6 +78,7 @@ export class McpAdapter {
   private readonly config: McpInitConfig;
   private readonly tools: readonly McpToolDefinition[];
   private readonly logger: Logger;
+  private readonly metrics: AdapterMetrics;
 
   private server: McpServer | undefined;
   private initialized: boolean;
@@ -82,6 +90,7 @@ export class McpAdapter {
     this.config = config;
     this.tools = ALL_TOOLS;
     this.logger = (config.logger ?? createLogger()).child('mcp');
+    this.metrics = createAdapterMetrics(config.metricRegistry ?? createMetricRegistry(), 'mcp');
     this.initialized = false;
     this.started = false;
   }
@@ -161,6 +170,9 @@ export class McpAdapter {
   private async dispatch(tool: McpToolDefinition): Promise<McpToolResult> {
     return withSpan(`mcp.${tool.name}`, async (span) => {
       span.setAttribute('tool', tool.name);
+      this.metrics.requestsTotal.inc();
+      this.metrics.activeRequests.set(this.metrics.activeRequests.getValue() + 1);
+      const startMs = performance.now();
       const role = this.resolveRole({ toolName: tool.name });
       const tctx: McpToolContext = {
         hermes: this.hermes,
@@ -174,18 +186,32 @@ export class McpAdapter {
         requireRole(role, tool.requires);
       } catch (err) {
         if (isPermissionError(err)) {
+          span.setAttribute('success', 'false');
+          this.metrics.activeRequests.set(Math.max(0, this.metrics.activeRequests.getValue() - 1));
+          this.metrics.errorsTotal.inc();
           this.logger.warn('permission denied', { tool: tool.name });
           return formatPermissionDenied(tool.name);
         }
+        span.setAttribute('success', 'false');
+        this.metrics.activeRequests.set(Math.max(0, this.metrics.activeRequests.getValue() - 1));
+        this.metrics.errorsTotal.inc();
         return toToolResult(err);
       }
 
       try {
         const result = await tool.handler(tctx);
+        span.setAttribute('success', result.isError ? 'false' : 'true');
+        this.metrics.activeRequests.set(Math.max(0, this.metrics.activeRequests.getValue() - 1));
+        this.metrics.commandsTotal.inc();
+        if (result.isError) this.metrics.errorsTotal.inc();
+        this.metrics.commandDurationMs.observe(performance.now() - startMs);
         this.logger.info('tool end', { tool: tool.name, success: !result.isError });
         return result;
       } catch (err) {
         this.lastError = err instanceof Error ? err.message : String(err);
+        span.setAttribute('success', 'false');
+        this.metrics.activeRequests.set(Math.max(0, this.metrics.activeRequests.getValue() - 1));
+        this.metrics.errorsTotal.inc();
         this.logger.error('tool failed', { tool: tool.name, error: this.lastError });
         return toToolResult(err);
       }

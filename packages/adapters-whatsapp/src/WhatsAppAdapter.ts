@@ -19,7 +19,14 @@
  */
 import type { HermesPort } from '@agent-os/hermes';
 import { now as coreNow } from '@agent-os/core';
-import { type Logger, createLogger, withSpan } from '@agent-os/observability';
+import {
+  type Logger,
+  createLogger,
+  withSpan,
+  createMetricRegistry,
+  createAdapterMetrics,
+  type AdapterMetrics,
+} from '@agent-os/observability';
 
 import {
   type CommandError,
@@ -88,6 +95,7 @@ export class WhatsAppAdapter {
   private readonly initConfig: WhatsAppInitConfig;
   private readonly commands: readonly WhatsAppCommand[];
   private readonly logger: Logger;
+  private readonly metrics: AdapterMetrics;
 
   private started: boolean;
   private lastError: string | undefined;
@@ -99,6 +107,7 @@ export class WhatsAppAdapter {
     this.resolvedAdminPhones = init.adminPhoneNumbers;
     this.commands = COMMANDS;
     this.logger = (init.logger ?? createLogger()).child('whatsapp');
+    this.metrics = createAdapterMetrics(init.metricRegistry ?? createMetricRegistry(), 'whatsapp');
     this.metadata = {
       name: ADAPTER_NAME,
       version: ADAPTER_VERSION,
@@ -163,8 +172,13 @@ export class WhatsAppAdapter {
   public async handleMessage(senderPhone: string, messageText: string): Promise<WhatsAppMessage> {
     return withSpan('whatsapp.handleMessage', async (span) => {
       span.setAttribute('sender_phone', senderPhone);
+      this.metrics.requestsTotal.inc();
+      this.metrics.activeRequests.set(this.metrics.activeRequests.getValue() + 1);
+      const startMs = performance.now();
 
       if (!this.started) {
+        this.metrics.activeRequests.set(Math.max(0, this.metrics.activeRequests.getValue() - 1));
+        this.metrics.errorsTotal.inc();
         return replyWithError({ code: 'INTERNAL', message: 'Adapter not started.' });
       }
 
@@ -172,6 +186,9 @@ export class WhatsAppAdapter {
 
       const commandName = this.parseCommand(messageText);
       if (!commandName) {
+        span.setAttribute('success', 'false');
+        this.metrics.activeRequests.set(Math.max(0, this.metrics.activeRequests.getValue() - 1));
+        this.metrics.errorsTotal.inc();
         this.logger.warn('unknown command', { senderPhone });
         return replyWithError({
           code: 'VALIDATION',
@@ -183,6 +200,9 @@ export class WhatsAppAdapter {
 
       const cmd = this.commands.find((c) => c.name === commandName);
       if (!cmd) {
+        span.setAttribute('success', 'false');
+        this.metrics.activeRequests.set(Math.max(0, this.metrics.activeRequests.getValue() - 1));
+        this.metrics.errorsTotal.inc();
         this.logger.warn('unknown command', { command: commandName, senderPhone });
         return replyWithError({
           code: 'VALIDATION',
@@ -203,9 +223,15 @@ export class WhatsAppAdapter {
         requireRole(role, cmd.requires);
       } catch (err) {
         if (isPermissionError(err)) {
+          span.setAttribute('success', 'false');
+          this.metrics.activeRequests.set(Math.max(0, this.metrics.activeRequests.getValue() - 1));
+          this.metrics.errorsTotal.inc();
           this.logger.warn('permission denied', { command: commandName, senderPhone });
           return replyWithPermission(cmd.name);
         }
+        span.setAttribute('success', 'false');
+        this.metrics.activeRequests.set(Math.max(0, this.metrics.activeRequests.getValue() - 1));
+        this.metrics.errorsTotal.inc();
         return replyWithError(toCommandError(err));
       }
 
@@ -215,14 +241,24 @@ export class WhatsAppAdapter {
         result = await cmd.handler(wctx, args);
       } catch (err) {
         this.lastError = err instanceof Error ? err.message : String(err);
+        span.setAttribute('success', 'false');
+        this.metrics.activeRequests.set(Math.max(0, this.metrics.activeRequests.getValue() - 1));
+        this.metrics.errorsTotal.inc();
         this.logger.error('command failed', { command: commandName, error: this.lastError });
         return replyWithError(toCommandError(err));
       }
 
       if (result.ok) {
+        span.setAttribute('success', 'true');
+        this.metrics.activeRequests.set(Math.max(0, this.metrics.activeRequests.getValue() - 1));
+        this.metrics.commandsTotal.inc();
+        this.metrics.commandDurationMs.observe(performance.now() - startMs);
         this.logger.info('command end', { command: commandName, success: true });
         return replyWithMessage(result.value);
       }
+      span.setAttribute('success', 'false');
+      this.metrics.activeRequests.set(Math.max(0, this.metrics.activeRequests.getValue() - 1));
+      this.metrics.errorsTotal.inc();
       this.logger.info('command end', { command: commandName, success: false });
       return replyWithError(result.error);
     });

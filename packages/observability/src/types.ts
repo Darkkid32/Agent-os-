@@ -102,6 +102,7 @@ export interface Histogram {
 
 export interface Gauge {
   readonly set: (value: number) => void;
+  readonly getValue: () => number;
   readonly labels: (labels: Readonly<Record<string, string>>) => Gauge;
 }
 

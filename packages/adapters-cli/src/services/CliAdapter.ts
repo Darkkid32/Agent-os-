@@ -21,7 +21,15 @@ import type {
   AdapterMetadata,
 } from '@agent-os/core/adapter-metadata';
 import type { HermesPort } from '@agent-os/hermes';
-import { type Logger, createLogger, withSpan } from '@agent-os/observability';
+import {
+  type Logger,
+  createLogger,
+  withSpan,
+  createMetricRegistry,
+  createAdapterMetrics,
+  type AdapterMetrics,
+  type MetricRegistry,
+} from '@agent-os/observability';
 import type { Command, CommandArgs } from '../interfaces/Command.js';
 import { createCommandRegistry, type CommandRegistry } from './CommandRegistry.js';
 import { createPermissionService, type CliRole, type PermissionService } from './Permissions.js';
@@ -56,6 +64,7 @@ export interface CliInitConfig {
   readonly hermes: HermesPort;
   readonly role: CliRole;
   readonly logger?: Logger;
+  readonly metricRegistry?: MetricRegistry;
 }
 
 export interface CliDispatchResult {
@@ -98,6 +107,7 @@ export const createCliAdapter = (): CliAdapter => {
   let permissions: PermissionService | undefined;
   let hermes: HermesPort | undefined;
   let logger: Logger | undefined;
+  let metrics: AdapterMetrics | undefined;
   let initialized = false;
   let started = false;
 
@@ -132,9 +142,13 @@ export const createCliAdapter = (): CliAdapter => {
 
   const handleCommand = async (cmd: Command, parsed: ParsedArgs): Promise<CliDispatchResult> => {
     return withSpan(`cli.${cmd.name}`, async (span) => {
+      const startMs = performance.now();
       const output: OutputMode = parsed.json ? 'json' : 'human';
       const ctx = buildContext(output);
       const args: CommandArgs = { positional: parsed.positional, flags: parsed.flags };
+      metrics?.requestsTotal.inc();
+      metrics?.activeRequests.set(metrics?.activeRequests.getValue() + 1);
+      span.setAttribute('command', cmd.name);
       logger?.info('command start', { command: cmd.name });
 
       const handlerResult: Result<unknown, CommandError> = await (async (): Promise<
@@ -172,6 +186,11 @@ export const createCliAdapter = (): CliAdapter => {
       const exitCode = handlerResult.ok ? 0 : mapErrorToExitCode(handlerResult.error.code);
       span.setAttribute('command', cmd.name);
       span.setAttribute('exit_code', exitCode);
+      span.setAttribute('success', exitCode === 0 ? 'true' : 'false');
+      metrics?.activeRequests.set(Math.max(0, metrics.activeRequests.getValue() - 1));
+      metrics?.commandsTotal.inc();
+      if (exitCode !== 0) metrics?.errorsTotal.inc();
+      metrics?.commandDurationMs.observe(performance.now() - startMs);
       logger?.info('command end', { command: cmd.name, exitCode });
       return { exitCode, rendered };
     });
@@ -230,6 +249,7 @@ export const createCliAdapter = (): CliAdapter => {
         hermes = config.hermes;
         permissions = createPermissionService(config.role);
         logger = (config.logger ?? createLogger()).child('cli');
+        metrics = createAdapterMetrics(config.metricRegistry ?? createMetricRegistry(), 'cli');
         if (!registry) registry = buildDefaultRegistry();
         initialized = true;
         logger.info('initialized');

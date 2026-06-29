@@ -16,7 +16,14 @@ import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import sensible from '@fastify/sensible';
 import type { HermesPort } from '@agent-os/hermes';
-import { createLogger, createContext, runWithContext } from '@agent-os/observability';
+import {
+  createLogger,
+  createContext,
+  runWithContext,
+  createMetricRegistry,
+  createAdapterMetrics,
+  type MetricRegistry,
+} from '@agent-os/observability';
 import { healthRoutes } from './routes/health.js';
 import { versionRoutes } from './routes/version.js';
 import { hermesRoutes } from './routes/hermes.js';
@@ -25,6 +32,7 @@ export interface AppConfig {
   readonly logger: boolean | { readonly level: string };
   readonly corsOrigins: readonly string[];
   readonly hermes?: HermesPort;
+  readonly metricRegistry?: MetricRegistry;
 }
 
 export const defaultConfig: AppConfig = {
@@ -36,6 +44,7 @@ export async function buildApp(config: Partial<AppConfig> = {}): Promise<Fastify
   const merged: AppConfig = { ...defaultConfig, ...config };
   const app = Fastify({ logger: merged.logger });
   const requestLogger = createLogger({ defaultAdapter: 'api' });
+  const metrics = createAdapterMetrics(merged.metricRegistry ?? createMetricRegistry(), 'api');
 
   await app.register(helmet, { contentSecurityPolicy: false });
   await app.register(cors, { origin: [...merged.corsOrigins] });
@@ -47,6 +56,9 @@ export async function buildApp(config: Partial<AppConfig> = {}): Promise<Fastify
     const ctx = createContext(correlationId);
     // Store context on the request for downstream use.
     (req as unknown as { _obsCtx: typeof ctx })._obsCtx = ctx;
+    metrics.requestsTotal.inc();
+    metrics.activeRequests.set(metrics.activeRequests.getValue() + 1);
+    (req as unknown as { _startMs: number })._startMs = performance.now();
     runWithContext(ctx, () => {
       requestLogger.info('request start', {
         method: req.method,
@@ -59,6 +71,7 @@ export async function buildApp(config: Partial<AppConfig> = {}): Promise<Fastify
 
   app.addHook('onResponse', async (req: FastifyRequest, reply: { statusCode: number }) => {
     const ctx = (req as unknown as { _obsCtx?: ReturnType<typeof createContext> })._obsCtx;
+    const startMs = (req as unknown as { _startMs?: number })._startMs;
     if (ctx) {
       runWithContext(ctx, () => {
         requestLogger.info('request end', {
@@ -70,6 +83,9 @@ export async function buildApp(config: Partial<AppConfig> = {}): Promise<Fastify
         });
       });
     }
+    metrics.activeRequests.set(Math.max(0, metrics.activeRequests.getValue() - 1));
+    if (startMs) metrics.requestDurationMs.observe(performance.now() - startMs);
+    if (reply.statusCode >= 400) metrics.errorsTotal.inc();
   });
 
   await app.register(healthRoutes, { prefix: '/health' });

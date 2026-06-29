@@ -13,7 +13,7 @@ import type {
   AdapterMetadata,
 } from '@agent-os/core/adapter-metadata';
 import type { HermesPort } from '@agent-os/hermes';
-import type { Logger } from '@agent-os/observability';
+import type { Logger, MetricRegistry } from '@agent-os/observability';
 import type { DiscordAction, DiscordRole } from './permissions.js';
 
 export interface DiscordMessage {
@@ -68,6 +68,7 @@ export interface DiscordInitConfig {
   readonly guildId: string;
   readonly adminUserIds: readonly string[];
   readonly logger?: Logger;
+  readonly metricRegistry?: MetricRegistry;
 }
 
 export type DiscordMetadata = AdapterMetadata;

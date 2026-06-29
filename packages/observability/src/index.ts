@@ -67,6 +67,13 @@ export { createMetricRegistry } from './metrics.js';
 export type { MetricRegistry, MetricEntry } from './metrics.js';
 
 // ---------------------------------------------------------------------------
+// Adapter metrics — standard metric bundles
+// ---------------------------------------------------------------------------
+
+export { createAdapterMetrics, createHermesMetrics } from './adapter-metrics.js';
+export type { AdapterMetrics, HermesMetrics } from './adapter-metrics.js';
+
+// ---------------------------------------------------------------------------
 // Tracer — OpenTelemetry wrapper
 // ---------------------------------------------------------------------------
 

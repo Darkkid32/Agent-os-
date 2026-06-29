@@ -1,6 +1,13 @@
 import { err, now as timestampNow, type Result, type Timestamp } from '@agent-os/core';
 import type { EventBus } from '@agent-os/event-bus';
-import { type Logger, createLogger } from '@agent-os/observability';
+import {
+  type Logger,
+  createLogger,
+  withSpan,
+  createMetricRegistry,
+  createHermesMetrics,
+  type MetricRegistry,
+} from '@agent-os/observability';
 import type { HermesConfig } from './HermesConfig.js';
 import {
   createHermesLifecycle,
@@ -106,6 +113,7 @@ export interface HermesKernelOptions {
   readonly registry?: HermesModuleRegistry;
   readonly healthMonitor?: HermesHealthMonitor;
   readonly logger?: Logger;
+  readonly metricRegistry?: MetricRegistry;
 }
 
 /**
@@ -128,6 +136,8 @@ const noopContainer: ContainerPort = {
 export const createHermes = (config: HermesConfig, options: HermesKernelOptions = {}): Hermes => {
   const rootLogger = options.logger ?? createLogger();
   const logger = rootLogger.child('hermes');
+  const metricRegistry = options.metricRegistry ?? createMetricRegistry();
+  const metrics = createHermesMetrics(metricRegistry);
   const lifecycle: HermesLifecycle = options.lifecycle ?? createHermesLifecycle();
   const registry: HermesModuleRegistry = options.registry ?? createHermesModuleRegistry();
   const healthMonitor: HermesHealthMonitor =
@@ -174,6 +184,8 @@ export const createHermes = (config: HermesConfig, options: HermesKernelOptions 
   let startedAt: Timestamp | undefined;
   lifecycle.onTransition((from, to) => {
     logger.info('lifecycle transition', { phase: `${from} → ${to}` });
+    metrics.lifecycleTransitionsTotal.inc();
+    metrics.loadedModules.set(registry.moduleCount());
     if (to === 'RUNNING') startedAt = timestampNow();
   });
 
@@ -236,103 +248,170 @@ export const createHermes = (config: HermesConfig, options: HermesKernelOptions 
     config,
 
     start: async (): Promise<Result<void>> => {
-      if (lifecycle.currentPhase() === 'RUNNING') return { ok: true, value: undefined };
+      return withSpan('hermes.start', async (span) => {
+        span.setAttribute('hermes.phase', lifecycle.currentPhase());
+        const startMs = performance.now();
 
-      if (lifecycle.isTerminal()) {
-        logger.warn('start blocked: terminal phase', { phase: lifecycle.currentPhase() });
-        return err(
-          new Error(
-            `Hermes: cannot start from terminal phase ${lifecycle.currentPhase()}. Create a new instance.`,
-          ),
-        );
-      }
+        if (lifecycle.currentPhase() === 'RUNNING') {
+          span.setAttribute('success', 'true');
+          return { ok: true, value: undefined };
+        }
 
-      try {
-        logger.info('starting');
-        lifecycle.transition('STARTING');
-      } catch (e) {
-        logger.error('start failed', { error: e instanceof Error ? e.message : String(e) });
-        return err(e instanceof Error ? e : new Error(String(e)));
-      }
+        if (lifecycle.isTerminal()) {
+          span.setAttribute('success', 'false');
+          logger.warn('start blocked: terminal phase', { phase: lifecycle.currentPhase() });
+          return err(
+            new Error(
+              `Hermes: cannot start from terminal phase ${lifecycle.currentPhase()}. Create a new instance.`,
+            ),
+          );
+        }
 
-      return { ok: true, value: undefined };
+        try {
+          logger.info('starting');
+          lifecycle.transition('STARTING');
+        } catch (e) {
+          span.setAttribute('success', 'false');
+          span.setAttribute('error.type', e instanceof Error ? e.constructor.name : 'unknown');
+          logger.error('start failed', { error: e instanceof Error ? e.message : String(e) });
+          metrics.errorsTotal.inc();
+          return err(e instanceof Error ? e : new Error(String(e)));
+        }
+
+        span.setAttribute('success', 'true');
+        metrics.hermesOperationDurationMs.observe(performance.now() - startMs);
+        return { ok: true, value: undefined };
+      });
     },
 
     stop: async (): Promise<Result<void>> => {
-      if (lifecycle.currentPhase() === 'STOPPED') return { ok: true, value: undefined };
-      if (lifecycle.currentPhase() === 'FAILED') {
-        logger.warn('stop blocked: FAILED state');
-        return err(new Error(`Hermes: cannot stop from FAILED state.`));
-      }
+      return withSpan('hermes.stop', async (span) => {
+        span.setAttribute('hermes.phase', lifecycle.currentPhase());
+        const startMs = performance.now();
 
-      try {
-        logger.info('stopping');
-        lifecycle.transition('STOPPING');
-        await drainModules();
-      } catch (e) {
-        logger.error('stop failed', { error: e instanceof Error ? e.message : String(e) });
-        try {
-          lifecycle.transition('FAILED');
-        } catch {
-          // already terminal
+        if (lifecycle.currentPhase() === 'STOPPED') {
+          span.setAttribute('success', 'true');
+          return { ok: true, value: undefined };
         }
-        return err(e instanceof Error ? e : new Error(String(e)));
-      }
+        if (lifecycle.currentPhase() === 'FAILED') {
+          span.setAttribute('success', 'false');
+          logger.warn('stop blocked: FAILED state');
+          return err(new Error(`Hermes: cannot stop from FAILED state.`));
+        }
 
-      return { ok: true, value: undefined };
+        try {
+          logger.info('stopping');
+          lifecycle.transition('STOPPING');
+          await drainModules();
+        } catch (e) {
+          span.setAttribute('success', 'false');
+          span.setAttribute('error.type', e instanceof Error ? e.constructor.name : 'unknown');
+          logger.error('stop failed', { error: e instanceof Error ? e.message : String(e) });
+          metrics.errorsTotal.inc();
+          try {
+            lifecycle.transition('FAILED');
+          } catch {
+            // already terminal
+          }
+          return err(e instanceof Error ? e : new Error(String(e)));
+        }
+
+        span.setAttribute('success', 'true');
+        metrics.hermesOperationDurationMs.observe(performance.now() - startMs);
+        return { ok: true, value: undefined };
+      });
     },
 
-    status: (): HermesStatus => ({
-      phase: lifecycle.currentPhase(),
-      uptime: computeUptime(),
-      modules: registry.moduleCount(),
-    }),
+    status: (): HermesStatus => {
+      const s = {
+        phase: lifecycle.currentPhase(),
+        uptime: computeUptime(),
+        modules: registry.moduleCount(),
+      };
+      metrics.loadedModules.set(s.modules);
+      return s;
+    },
 
     registerModule: (spec: HermesModuleSpec): Result<void> => {
-      try {
-        assertPhase('STARTING');
-      } catch (e) {
-        if (spec.required) {
+      return withSpan('hermes.registerModule', (span) => {
+        span.setAttribute('module', spec.name);
+        span.setAttribute('hermes.phase', lifecycle.currentPhase());
+        const startMs = performance.now();
+
+        try {
+          assertPhase('STARTING');
+        } catch (e) {
+          if (spec.required) {
+            span.setAttribute('success', 'false');
+            span.setAttribute('error.type', e instanceof Error ? e.constructor.name : 'unknown');
+            logger.error('required module registration failed', {
+              module: spec.name,
+              error: e instanceof Error ? e.message : String(e),
+            });
+            try {
+              lifecycle.transition('FAILED');
+            } catch {
+              // already terminal
+            }
+          }
+          metrics.errorsTotal.inc();
+          return err(e instanceof Error ? e : new Error(String(e)));
+        }
+        // §5.4: failure of a required module transitions Hermes to FAILED.
+        const result = registry.registerModule(spec);
+        if (result.ok) {
+          span.setAttribute('success', 'true');
+          logger.info('module registered', { module: spec.name });
+          metrics.loadedModules.set(registry.moduleCount());
+        } else if (spec.required) {
+          span.setAttribute('success', 'false');
+          span.setAttribute('error.type', 'module_registration_failed');
           logger.error('required module registration failed', {
             module: spec.name,
-            error: e instanceof Error ? e.message : String(e),
+            error: result.error.message,
           });
           try {
             lifecycle.transition('FAILED');
           } catch {
             // already terminal
           }
+          metrics.errorsTotal.inc();
         }
-        return err(e instanceof Error ? e : new Error(String(e)));
-      }
-      // §5.4: failure of a required module transitions Hermes to FAILED.
-      const result = registry.registerModule(spec);
-      if (result.ok) {
-        logger.info('module registered', { module: spec.name });
-      } else if (spec.required) {
-        logger.error('required module registration failed', {
-          module: spec.name,
-          error: result.error.message,
-        });
-        try {
-          lifecycle.transition('FAILED');
-        } catch {
-          // already terminal
-        }
-      }
-      return result;
+        metrics.hermesOperationDurationMs.observe(performance.now() - startMs);
+        return result;
+      });
     },
 
     unregisterModule: (name: string): Result<void> => {
-      try {
-        assertPhase('RUNNING', 'STOPPING');
-      } catch (e) {
-        return err(e instanceof Error ? e : new Error(String(e)));
-      }
-      return registry.unregisterModule(name);
+      return withSpan('hermes.unregisterModule', (span) => {
+        span.setAttribute('module', name);
+        span.setAttribute('hermes.phase', lifecycle.currentPhase());
+        const startMs = performance.now();
+
+        try {
+          assertPhase('RUNNING', 'STOPPING');
+        } catch (e) {
+          span.setAttribute('success', 'false');
+          span.setAttribute('error.type', e instanceof Error ? e.constructor.name : 'unknown');
+          metrics.errorsTotal.inc();
+          return err(e instanceof Error ? e : new Error(String(e)));
+        }
+        const result = registry.unregisterModule(name);
+        span.setAttribute('success', result.ok ? 'true' : 'false');
+        if (result.ok) metrics.loadedModules.set(registry.moduleCount());
+        metrics.hermesOperationDurationMs.observe(performance.now() - startMs);
+        return result;
+      });
     },
 
-    health: async (): Promise<HermesHealthMonitorReport> => healthMonitor.health(),
+    health: async (): Promise<HermesHealthMonitorReport> => {
+      return withSpan('hermes.health', async () => {
+        const startMs = performance.now();
+        const report = await healthMonitor.health();
+        metrics.hermesOperationDurationMs.observe(performance.now() - startMs);
+        return report;
+      });
+    },
   };
 
   // Plugin Loader and Event Dispatcher are wired for future Bootstrap

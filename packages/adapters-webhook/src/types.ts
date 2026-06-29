@@ -24,7 +24,7 @@ import type {
 } from '@agent-os/core/adapter-metadata';
 import type { HermesPort } from '@agent-os/hermes';
 import type { Result } from '@agent-os/core';
-import type { Logger } from '@agent-os/observability';
+import type { Logger, MetricRegistry } from '@agent-os/observability';
 
 export type WebhookMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
@@ -116,6 +116,8 @@ export interface WebhookAdapterConfig {
   readonly timeoutMs?: number;
   /** Optional structured logger. */
   readonly logger?: Logger;
+  /** Optional metric registry. */
+  readonly metricRegistry?: MetricRegistry;
 }
 
 export type WebhookAdapterHealthStatus = AdapterHealthStatus;
