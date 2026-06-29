@@ -1,0 +1,42 @@
+flowchart LR
+    subgraph Browser
+        Operator[Operator]
+    end
+
+    subgraph Container[Host or Pod]
+        Dashboard[Next.js<br/>port 3000]
+        API[Fastify<br/>port 4000]
+    end
+
+    subgraph Postgres[PostgreSQL 16]
+        TBRuns[(workflows.runs)]
+        TBMemory[(memory.records)]
+        TBAgents[(agents.specs)]
+    end
+
+    subgraph Redis[Redis 7]
+        TBEvents((event-bus.streams))
+        TBCache((llm.cache))
+    end
+
+    subgraph External[External Services]
+        OTLP[OTLP Collector]
+        OpenRouter[OpenRouter]
+    end
+
+    Operator <-->|HTTPS| Dashboard
+    Dashboard <-->|HTTP/JSON| API
+    API <-->|SQL| Postgres
+    API <-->|RESP / Streams| Redis
+    API -->|telemetry spans/metrics| OTLP
+    API -->|LLM requests| OpenRouter
+    Redis -. events .- Dashboard
+    Postgres -. audit logs .- OTLP
+
+    classDef ext fill:#fde68a,stroke:#92400e,color:#1f2937
+    classDef intern fill:#e0f2fe,stroke:#0369a1,color:#1f2937
+    classDef store fill:#f1f5f9,stroke:#475569,color:#1f2937
+
+    class Operator,OTLP,OpenRouter ext
+    class Dashboard,API intern
+    class Postgres,Redis,TBRuns,TBMemory,TBAgents,TBEvents,TBCache store

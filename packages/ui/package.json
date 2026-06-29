@@ -1,0 +1,56 @@
+{
+  "name": "@agent-os/ui",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Reusable React + Tailwind + shadcn/ui components.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./styles.css": "./dist/styles.css",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsc -p tsconfig.build.json --watch",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --ext .ts,.tsx --max-warnings=0",
+    "test": "echo \"no tests yet\" && exit 0",
+    "clean": "rimraf dist"
+  },
+  "keywords": [
+    "agent-os",
+    "ui",
+    "react",
+    "tailwind",
+    "shadcn"
+  ],
+  "author": "Agent OS Maintainers",
+  "license": "Apache-2.0",
+  "agent-os": {
+    "layer": 3,
+    "audience": "internal"
+  },
+  "peerDependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "dependencies": {
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^2.5.4"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.11",
+    "@types/react-dom": "^18.3.0"
+  }
+}

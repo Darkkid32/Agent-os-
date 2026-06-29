@@ -1,0 +1,37 @@
+%% Hermes Lifecycle Manager — internal state machine
+%% Conforms to docs/architecture/hermes.md §2.4 and §3.
+%% Single writer of the phase; transitions go through the LEGAL_TRANSITIONS
+%% matrix defined in HermesLifecycle.ts. Handlers receive (from, to) via
+%% the onTransition callback (event emission / health capture are wired by
+%% future HermesEventDispatcher and HermesHealthMonitor modules).
+
+stateDiagram-v2
+    [*] --> INITIALIZING: createHermesLifecycle()
+
+    INITIALIZING --> STARTING : config valid, DI built, dispatcher ready
+    INITIALIZING --> FAILED   : config invalid / DI error
+
+    STARTING --> RUNNING : all required modules registered, aggregate health ≠ failed
+    STARTING --> FAILED  : required module failed / dep retries exhausted
+
+    RUNNING --> STOPPING : stop() / SIGTERM / SIGINT
+    RUNNING --> FAILED   : critical module health == failed
+
+    STOPPING --> STOPPED : all modules drained within deadline
+    STOPPING --> FAILED  : drain timed out (residual modules abandoned)
+
+    STOPPED --> [*]
+    FAILED  --> [*]
+
+    note right of INITIALIZING
+      Single writer of the phase value.
+      Readers use currentPhase().
+    end note
+
+    note right of STOPPED
+      Terminal: any transition throws.
+    end note
+
+    note right of FAILED
+      Terminal: any transition throws.
+    end note

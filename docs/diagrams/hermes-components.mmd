@@ -1,0 +1,77 @@
+%% Hermes kernel — post-Phase 2.8 (Kernel Integration).
+%% Hermes.ts is now a thin orchestrator that wires sibling components.
+%% Every responsibility has exactly one owner.
+
+graph TD
+    subgraph hermes["packages/hermes (Layer 4 — Surface)"]
+        Index["index.ts"]
+        HermesBuilder["HermesBuilder.ts<br/><i>Phase 2.1</i>"]
+        Hermes["Hermes.ts<br/><i>Phase 2.8 — orchestrator only</i>"]
+        HermesConfig["HermesConfig.ts<br/><i>Phase 2.1</i>"]
+        HermesLifecycle["HermesLifecycle.ts<br/><i>Phase 2.3 — sole phase writer</i>"]
+        HermesContainer["HermesContainer.ts<br/><i>Phase 2.2</i>"]
+        HermesEventDispatcher["HermesEventDispatcher.ts<br/><i>Phase 2.4</i>"]
+        HermesModuleRegistry["HermesModuleRegistry.ts<br/><i>Phase 2.5</i>"]
+        HermesHealthMonitor["HermesHealthMonitor.ts<br/><i>Phase 2.6</i>"]
+        HermesPluginLoader["HermesPluginLoader.ts<br/><i>Phase 2.7 — only fs user</i>"]
+    end
+
+    subgraph allowed["Allowed @agent-os/* deps (per §4.1)"]
+        Core["@agent-os/core"]
+        Runtime["@agent-os/runtime"]
+        Observability["@agent-os/observability"]
+        EventBusPkg["@agent-os/event-bus"]
+    end
+
+    Index --> Hermes
+    Index --> HermesBuilder
+    Index --> HermesConfig
+    Index --> HermesContainer
+    Index --> HermesLifecycle
+    Index --> HermesEventDispatcher
+    Index --> HermesModuleRegistry
+    Index --> HermesHealthMonitor
+    Index --> HermesPluginLoader
+
+    HermesBuilder --> Hermes
+    HermesBuilder --> HermesConfig
+    Hermes --> HermesConfig
+    Hermes --> HermesLifecycle
+    Hermes --> HermesModuleRegistry
+    Hermes --> HermesHealthMonitor
+    Hermes --> HermesEventDispatcher
+    Hermes --> HermesPluginLoader
+
+    HermesEventDispatcher --> HermesLifecycle
+    HermesEventDispatcher --> EventBusPkg
+    HermesEventDispatcher --> Core
+
+    HermesModuleRegistry --> Core
+    HermesHealthMonitor --> HermesModuleRegistry
+    HermesHealthMonitor --> Core
+
+    HermesPluginLoader --> HermesModuleRegistry
+    HermesPluginLoader --> HermesConfig
+    HermesPluginLoader --> Core
+
+    HermesLifecycle --> Core
+    HermesContainer --> Core
+
+    style HermesLifecycle fill:#f9e79f,stroke:#f4d03f,stroke-width:2px
+    style Hermes fill:#d6eaf8,stroke:#5dade2,stroke-width:2px
+    style HermesEventDispatcher fill:#aed6f1,stroke:#5dade2
+    style HermesModuleRegistry fill:#a9dfbf,stroke:#58d68d
+    style HermesHealthMonitor fill:#d7bde2,stroke:#a569bd
+    style HermesPluginLoader fill:#f5cba7,stroke:#e67e22
+    style HermesConfig fill:#d6eaf8,stroke:#5dade2
+    style HermesBuilder fill:#d6eaf8,stroke:#5dade2
+    style HermesContainer fill:#d6eaf8,stroke:#5dade2
+    style Index fill:#eaecee,stroke:#85929e
+    style Observability fill:#fadbd8,stroke:#ec7063,stroke-dasharray:5 5
+```
+
+**Reading the diagram:**
+- `HermesLifecycle` (yellow) remains the sole writer of the phase value.
+- `Hermes.ts` (blue, bold) is the orchestrator. It composes Lifecycle + Registry + HealthMonitor + EventDispatcher + PluginLoader + Config and exposes the public `Hermes` API.
+- Every component has a single owner. No sibling-to-sibling wiring except via the façade.
+- `@agent-os/observability` is shown dashed — reserved for future Bootstrap integration; not yet wired.

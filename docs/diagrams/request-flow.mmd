@@ -1,0 +1,44 @@
+sequenceDiagram
+    autonumber
+    participant U as User
+    participant D as Dashboard
+    participant A as API (Fastify)
+    participant R as Runtime
+    participant AG as Agents
+    participant LLM as LLM Adapter<br/>(OpenRouter)
+    participant MEM as Memory
+    participant BUS as EventBus
+    participant OTEL as OpenTelemetry
+
+    U->>D: open dashboard
+    D->>A: GET /health
+    A-->>D: 200 {status:ok}
+    A->>OTEL: start span "api.health"
+    A-->>OTEL: end span
+
+    U->>D: click "Run workflow"
+    D->>A: POST /v1/workflows/:id/run
+    A->>R: invoke(runId)
+    R->>OTEL: start span "workflow.execute"
+
+    loop per step
+        R->>AG: invoke(agentId, input)
+        AG->>LLM: stream(model, prompt)
+        LLM-->>AG: tokens (SSE)
+        AG-->>R: result
+
+        opt step needs memory
+            R->>MEM: put(namespace, key, value)
+            MEM-->>R: ack
+            R->>MEM: get(namespace, key)
+            MEM-->>R: value
+        end
+
+        R->>BUS: publish(step.completed)
+        BUS-->>D: streaming sub (Phase 2)
+    end
+
+    R-->>A: run finished
+    R->>OTEL: end span
+    A-->>D: 200 {runId, status:completed}
+    D-->>U: render result

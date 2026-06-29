@@ -1,0 +1,72 @@
+flowchart TB
+    subgraph Foundation
+        Core[core<br/>Result, brands]
+        Shared[shared<br/>Zod schemas]
+    end
+
+    subgraph Platform
+        EventBus[event-bus]
+        Memory[memory]
+        Runtime[runtime]
+        Workflow[workflow]
+        Observability[observability]
+    end
+
+    subgraph Domain
+        Ui[ui<br/>React + Tailwind]
+        AdaptersSDK[adapters-sdk<br/>SDK contract]
+        Adapters[adapters<br/>1st-party]
+    end
+
+    subgraph Surfaces
+        Hermes[hermes<br/>integration]
+    end
+
+    subgraph Apps
+        Api[apps/api<br/>Fastify]
+        Dashboard[apps/dashboard<br/>Next.js]
+    end
+
+    %% Foundation
+    Shared -->|zod & helpers| Core
+
+    %% Platform
+    EventBus --> Core
+    Memory --> Core
+    Runtime --> Core
+    Workflow --> Core
+    Observability --> Core
+
+    %% Domain
+    Adapters --> AdaptersSDK
+    Adapters --> Core
+    AdaptersSDK --> Core
+
+    %% Surfaces
+    Hermes --> Runtime
+    Hermes --> Observability
+    Hermes --> EventBus
+    Hermes --> Core
+
+    %% Apps
+    Api --> Shared
+    Api --> Runtime
+    Api --> Observability
+    Dashboard --> Shared
+    Dashboard --> Ui
+
+    %% Domains that consume Foundation
+    Ui --> Shared
+
+    %% Class definitions
+    classDef foundation fill:#fef3c7,stroke:#b45309,color:#1f2937
+    classDef platform fill:#dbeafe,stroke:#1d4ed8,color:#1f2937
+    classDef domain fill:#dcfce7,stroke:#166534,color:#1f2937
+    classDef surface fill:#ede9fe,stroke:#6d28d9,color:#1f2937
+    classDef app fill:#fee2e2,stroke:#b91c1c,color:#1f2937
+
+    class Core,Shared foundation
+    class EventBus,Memory,Runtime,Workflow,Observability platform
+    class Ui,AdaptersSDK,Adapters domain
+    class Hermes surface
+    class Api,Dashboard app

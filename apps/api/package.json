@@ -1,0 +1,44 @@
+{
+  "name": "@agent-os/api",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Agent OS HTTP API. Fastify-based service exposing health, version, and runtime endpoints.",
+  "type": "module",
+  "main": "./dist/server.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsx watch src/server.ts",
+    "start": "node dist/server.js",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --ext .ts --max-warnings=0",
+    "test": "echo \"no tests yet\" && exit 0",
+    "clean": "rimraf dist"
+  },
+  "keywords": [
+    "agent-os",
+    "api",
+    "fastify"
+  ],
+  "author": "Agent OS Maintainers",
+  "license": "Apache-2.0",
+  "agent-os": {
+    "layer": 4,
+    "audience": "internal",
+    "kind": "app"
+  },
+  "dependencies": {
+    "@agent-os/core": "workspace:*",
+    "@agent-os/shared": "workspace:*",
+    "@agent-os/observability": "workspace:*",
+    "@fastify/cors": "^10.0.1",
+    "@fastify/helmet": "^12.0.1",
+    "@fastify/sensible": "^6.0.1",
+    "fastify": "^5.0.0",
+    "pino": "^9.5.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.10",
+    "tsx": "^4.19.1"
+  }
+}

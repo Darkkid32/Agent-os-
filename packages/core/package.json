@@ -1,0 +1,41 @@
+{
+  "name": "@agent-os/core",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Core primitives, types, and utilities for the Agent OS runtime and platform.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsc -p tsconfig.build.json --watch",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --ext .ts --max-warnings=0",
+    "test": "echo \"no tests yet\" && exit 0",
+    "clean": "rimraf dist"
+  },
+  "keywords": [
+    "agent-os",
+    "core",
+    "typescript"
+  ],
+  "author": "Agent OS Maintainers",
+  "license": "Apache-2.0",
+  "agent-os": {
+    "layer": 1,
+    "audience": "internal"
+  }
+}

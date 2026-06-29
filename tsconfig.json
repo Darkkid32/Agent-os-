@@ -1,0 +1,44 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@agent-os/core": ["packages/core/src/index.ts"],
+      "@agent-os/core/*": ["packages/core/src/*"],
+      "@agent-os/shared": ["packages/shared/src/index.ts"],
+      "@agent-os/shared/*": ["packages/shared/src/*"],
+      "@agent-os/runtime": ["packages/runtime/src/index.ts"],
+      "@agent-os/runtime/*": ["packages/runtime/src/*"],
+      "@agent-os/workflow": ["packages/workflow/src/index.ts"],
+      "@agent-os/workflow/*": ["packages/workflow/src/*"],
+      "@agent-os/agents": ["packages/agents/src/index.ts"],
+      "@agent-os/agents/*": ["packages/agents/src/*"],
+      "@agent-os/memory": ["packages/memory/src/index.ts"],
+      "@agent-os/memory/*": ["packages/memory/src/*"],
+      "@agent-os/event-bus": ["packages/event-bus/src/index.ts"],
+      "@agent-os/event-bus/*": ["packages/event-bus/src/*"],
+      "@agent-os/adapters": ["packages/adapters/src/index.ts"],
+      "@agent-os/adapters/*": ["packages/adapters/src/*"],
+      "@agent-os/adapters-sdk": ["packages/adapters-sdk/src/index.ts"],
+      "@agent-os/adapters-sdk/*": ["packages/adapters-sdk/src/*"],
+      "@agent-os/observability": ["packages/observability/src/index.ts"],
+      "@agent-os/observability/*": ["packages/observability/src/*"],
+      "@agent-os/ui": ["packages/ui/src/index.ts"],
+      "@agent-os/ui/*": ["packages/ui/src/*"],
+      "@agent-os/hermes": ["packages/hermes/src/index.ts"],
+      "@agent-os/hermes/*": ["packages/hermes/src/*"],
+      "@/api/*": ["apps/api/src/*"],
+      "@/dashboard/*": ["apps/dashboard/src/*"]
+    }
+  },
+  "include": [
+    "apps/*/src/**/*.ts",
+    "apps/*/src/**/*.tsx",
+    "packages/*/src/**/*.ts",
+    "scripts/**/*.ts",
+    "*.ts",
+    "*.mjs"
+  ],
+  "exclude": ["**/node_modules", "**/dist", "**/.next", "**/.turbo", "**/coverage"]
+}

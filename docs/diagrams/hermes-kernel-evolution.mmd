@@ -1,0 +1,27 @@
+%% Hermes Kernel progress (Phase 1.1 → Phase 2.8).
+
+graph LR
+    P11["Phase 1.1<br/>Engineering foundation<br/><i>monorepo, tools, CI</i>"]
+    P21["Phase 2.1<br/>Bootstrap<br/><i>HermesConfig + Builder + façade</i>"]
+    P22["Phase 2.2<br/>DI Container<br/><i>register, resolve, has, singleton, transient</i>"]
+    P23["Phase 2.3<br/>Lifecycle Manager<br/><i>6 phases, 8 edges, terminal guard, lock</i>"]
+    P235["Phase 2.3.5<br/>Single-owner refactor<br/><i>Hermes delegates to HermesLifecycle</i>"]
+    P24["Phase 2.4<br/>Event Dispatcher<br/><i>5 lifecycle topics, post-commit, best-effort</i>"]
+    P25["Phase 2.5<br/>Module Registry<br/><i>inventory only; no execution</i>"]
+    P26["Phase 2.6<br/>Health Monitor<br/><i>read-only aggregator</i>"]
+    P27["Phase 2.7<br/>Plugin Loader<br/><i>only fs user; facade wiring</i>"]
+    P28["Phase 2.8<br/>Kernel Integration<br/><i>Hermes.ts = orchestrator only</i>"]
+
+    P11 --> P21 --> P22 --> P23 --> P235 --> P24 --> P25 --> P26 --> P27 --> P28
+
+    style P28 fill:#f9e79f,stroke:#f4d03f,stroke-width:2px
+    style P235 fill:#f9e79f,stroke:#f4d03f
+    style P24 fill:#aed6f1,stroke:#5dade2
+    style P25 fill:#a9dfbf,stroke:#58d68d
+    style P26 fill:#d7bde2,stroke:#a569bd
+    style P27 fill:#f5cba7,stroke:#e67e22
+```
+
+**Legend:**
+- Yellow, solid: completed Phase 2.8 (Kernel Integration) — `Hermes.ts` is now an orchestrator.
+- Other colours: previously completed kernel phases.

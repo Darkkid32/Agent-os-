@@ -1,0 +1,11 @@
+# .gitignore additions for obsidian/
+
+# Local Obsidian workspace state
+.obsidian/workspace.json
+.obsidian/plugins/
+
+# Cache
+.obsidian/cache/
+
+# Daily notes (auto-generated)
+daily/

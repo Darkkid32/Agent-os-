@@ -1,0 +1,48 @@
+{
+  "name": "@agent-os/adapters-mcp",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Model Context Protocol (MCP) surface adapter for the Hermes kernel. Phase 3.7.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsc -p tsconfig.build.json --watch",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --ext .ts --max-warnings=0",
+    "test": "echo \"no tests yet\" && exit 0",
+    "clean": "rimraf dist"
+  },
+  "keywords": [
+    "agent-os",
+    "adapters-mcp",
+    "mcp",
+    "model-context-protocol"
+  ],
+  "author": "Agent OS Maintainers",
+  "license": "Apache-2.0",
+  "agent-os": {
+    "layer": 4,
+    "audience": "internal"
+  },
+  "dependencies": {
+    "@agent-os/core": "workspace:*",
+    "@agent-os/hermes": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "zod": "^3.25.0"
+  }
+}

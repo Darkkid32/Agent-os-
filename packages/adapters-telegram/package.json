@@ -1,0 +1,45 @@
+{
+  "name": "@agent-os/adapters-telegram",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Telegram adapter for the Hermes kernel. Phase 3.5.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsc -p tsconfig.build.json --watch",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --ext .ts --max-warnings=0",
+    "test": "echo \"no tests yet\" && exit 0",
+    "clean": "rimraf dist"
+  },
+  "keywords": [
+    "agent-os",
+    "adapters-telegram"
+  ],
+  "author": "Agent OS Maintainers",
+  "license": "Apache-2.0",
+  "agent-os": {
+    "layer": 4,
+    "audience": "internal"
+  },
+  "dependencies": {
+    "@agent-os/core": "workspace:*",
+    "@agent-os/hermes": "workspace:*",
+    "grammy": "^1.36.0"
+  }
+}

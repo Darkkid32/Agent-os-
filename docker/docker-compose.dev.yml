@@ -1,0 +1,52 @@
+# docker-compose.dev.yml — local development overlay.
+#
+# Run alongside docker-compose.yml to get:
+#   - Source-mounted apps (live reload)
+#   - Dev Dockerfile targets (tsx watch for api, next dev for dashboard)
+#   - Dropped restart policies
+#
+# Usage from repo root:
+#   docker compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml \
+#     --env-file docker/.env.example \
+#     up --build
+#
+# Stop production:
+#   docker compose -f docker/docker-compose.yml down
+
+name: agent-os-dev
+
+services:
+  api:
+    build:
+      target: development
+    command: ["pnpm", "--filter", "@agent-os/api", "run", "dev"]
+    environment:
+      NODE_ENV: development
+      HOST: 0.0.0.0
+      PORT: 4000
+      LOG_LEVEL: debug
+    volumes:
+      - ../apps/api/src:/repo/apps/api/src:ro
+      - ../packages:/repo/packages:ro
+    restart: unless-stopped
+
+  dashboard:
+    build:
+      target: development
+    command: ["pnpm", "--filter", "@agent-os/dashboard", "run", "dev"]
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      NEXT_PUBLIC_API_BASE_URL: http://api:4000
+    volumes:
+      - ../apps/dashboard/src:/repo/apps/dashboard/src:ro
+      - ../packages:/repo/packages:ro
+    restart: unless-stopped
+
+  postgres:
+    ports:
+      - "5432:5432"
+
+  redis:
+    ports:
+      - "6379:6379"

@@ -1,0 +1,57 @@
+{
+  "name": "agent-os",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Agent OS — a multi-agent operating system runtime and tooling platform.",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=20.11.0 LTS",
+    "pnpm": ">=9.0.0"
+  },
+  "packageManager": "pnpm@9.12.0",
+  "scripts": {
+    "build": "pnpm -r --filter \"./packages/*\" run build && pnpm -r --filter \"./apps/*\" run build",
+    "dev": "pnpm -r --parallel run dev",
+    "lint": "pnpm run lint:eslint && pnpm run lint:prettier",
+    "lint:eslint": "eslint . --ext .ts,.tsx --max-warnings=0",
+    "lint:prettier": "prettier --check \"**/*.{ts,tsx,js,mjs,cjs,json,md,yml,yaml}\"",
+    "format": "prettier --write \"**/*.{ts,tsx,js,mjs,cjs,json,md,yml,yaml}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,mjs,cjs,json,md,yml,yaml}\"",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "pnpm -r --parallel run test",
+    "clean": "pnpm -r --parallel exec rimraf dist .turbo coverage",
+    "prepare": "husky",
+    "commitlint": "commitlint --edit",
+    "release": "pnpm exec changeset version && pnpm install",
+    "verify": "pnpm run graph:check && pnpm run lint && pnpm run typecheck && pnpm run build",
+    "docker:dev": "docker compose -f docker/docker-compose.yml --env-file docker/.env.example up --build",
+    "graph:check": "tsx scripts/check-cycles.ts",
+    "graph:paths": "tsx scripts/check-paths.ts",
+    "graph:tree": "node scripts/print-tree.mjs"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.27.1",
+    "@commitlint/cli": "^19.5.0",
+    "@commitlint/config-conventional": "^19.5.0",
+    "@types/node": "^20.14.10",
+    "@typescript-eslint/eslint-plugin": "^8.7.0",
+    "@typescript-eslint/parser": "^8.7.0",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "husky": "^9.1.6",
+    "lint-staged": "^15.2.10",
+    "prettier": "^3.3.3",
+    "rimraf": "^6.0.1",
+    "tsx": "^4.19.1",
+    "typescript": "^5.6.2"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,mjs,cjs}": [
+      "eslint --max-warnings=0 --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,yml,yaml}": [
+      "prettier --write"
+    ]
+  }
+}

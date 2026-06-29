@@ -1,0 +1,6 @@
+{
+  "name": "agent-os",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Agent OS — a multi-agent operating system runtime and tooling platform."
+}
