@@ -112,6 +112,7 @@ export class WebhookAdapter {
       name: ADAPTER_NAME,
       version: ADAPTER_VERSION,
       interfaceType: 'webhook',
+      supportedOperations: ['webhook', 'health'],
       transport: 'http',
       signatureEnabled: this.signatureVerifier !== undefined,
       routeCount: this.routes.length,

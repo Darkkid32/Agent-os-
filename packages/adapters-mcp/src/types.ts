@@ -10,6 +10,11 @@
  * `isError: true`. Only programming errors and SDK failures are caught
  * by the dispatcher and translated into a generic isError response.
  */
+import type {
+  AdapterHealth,
+  AdapterHealthStatus,
+  AdapterMetadata,
+} from '@agent-os/core/adapter-metadata';
 import type { HermesPort } from '@agent-os/hermes';
 import type { McpAction, McpRole } from './permissions.js';
 
@@ -50,18 +55,11 @@ export interface McpToolResult {
   readonly data?: unknown;
 }
 
-export type McpAdapterHealthStatus = 'healthy' | 'degraded' | 'failed' | 'unknown';
+export type McpAdapterHealthStatus = AdapterHealthStatus;
 
-export interface McpAdapterHealth {
-  readonly status: McpAdapterHealthStatus;
-  readonly detail?: string;
-  readonly at: number;
-}
+export type McpAdapterHealth = AdapterHealth;
 
-export interface McpMetadata {
-  readonly name: string;
-  readonly version: string;
-  readonly interfaceType: 'mcp';
+export type McpMetadata = AdapterMetadata & {
   readonly transport: 'stdio';
   readonly toolCount: number;
-}
+};

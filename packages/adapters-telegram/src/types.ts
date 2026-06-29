@@ -9,6 +9,11 @@
  * (SDK / network) are caught by the dispatcher and translated into a
  * generic user-facing message.
  */
+import type {
+  AdapterHealth,
+  AdapterHealthStatus,
+  AdapterMetadata,
+} from '@agent-os/core/adapter-metadata';
 import type { HermesPort } from '@agent-os/hermes';
 import type { Result } from '@agent-os/core';
 import type { TelegramAction, TelegramRole } from './permissions.js';
@@ -68,18 +73,9 @@ export interface TelegramInitConfig {
 
 export type TelegramTransport = 'polling' | 'webhook';
 
-export interface TelegramMetadata {
-  readonly name: string;
-  readonly version: string;
-  readonly interfaceType: 'telegram';
-  readonly supportedOperations: readonly string[];
+export type TelegramMetadata = AdapterMetadata & {
   readonly transport: TelegramTransport;
-}
+};
 
-export type TelegramAdapterHealthStatus = 'healthy' | 'degraded' | 'failed' | 'unknown';
-
-export interface TelegramAdapterHealth {
-  readonly status: TelegramAdapterHealthStatus;
-  readonly detail?: string;
-  readonly at: number;
-}
+export type TelegramAdapterHealthStatus = AdapterHealthStatus;
+export type TelegramAdapterHealth = AdapterHealth;

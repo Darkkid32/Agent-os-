@@ -17,6 +17,11 @@
  * propagate as Result. Only programming errors, malformed requests,
  * and infrastructure failures are caught.
  */
+import type {
+  AdapterHealth,
+  AdapterHealthStatus,
+  AdapterMetadata,
+} from '@agent-os/core/adapter-metadata';
 import type { HermesPort } from '@agent-os/hermes';
 import type { Result } from '@agent-os/core';
 
@@ -110,19 +115,12 @@ export interface WebhookAdapterConfig {
   readonly timeoutMs?: number;
 }
 
-export type WebhookAdapterHealthStatus = 'healthy' | 'degraded' | 'failed' | 'unknown';
+export type WebhookAdapterHealthStatus = AdapterHealthStatus;
 
-export interface WebhookAdapterHealth {
-  readonly status: WebhookAdapterHealthStatus;
-  readonly detail?: string;
-  readonly at: number;
-}
+export type WebhookAdapterHealth = AdapterHealth;
 
-export interface WebhookMetadata {
-  readonly name: string;
-  readonly version: string;
-  readonly interfaceType: 'webhook';
+export type WebhookMetadata = AdapterMetadata & {
   readonly transport: 'http';
   readonly signatureEnabled: boolean;
   readonly routeCount: number;
-}
+};

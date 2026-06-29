@@ -144,6 +144,7 @@ export class McpAdapter {
       name: ADAPTER_NAME,
       version: ADAPTER_VERSION,
       interfaceType: 'mcp',
+      supportedOperations: ['status', 'health', 'start', 'stop', 'modules', 'config', 'version'],
       transport: 'stdio',
       toolCount: this.tools.length,
     };

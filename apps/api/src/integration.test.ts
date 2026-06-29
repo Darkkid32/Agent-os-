@@ -71,14 +71,17 @@ describe('apps/api ↔ Hermes integration', () => {
     await app.close();
   });
 
-  it('POST /v1/stop returns an error envelope (HERMES) when stop is illegal', async () => {
+  it('POST /v1/stop returns the platform-spec error envelope (PHASE_CONFLICT, 409) when stop is illegal', async () => {
     const hermes = seedHermes();
     const app = await buildApp({ logger: false, hermes });
     const res = await app.inject({ method: 'POST', url: '/v1/stop' });
-    expect(res.statusCode).toBe(200); // envelope-form 200 with err body
     const body = res.json() as { ok: boolean; error?: { code: string; message: string } };
+    expect(res.statusCode).toBe(409);
     expect(body.ok).toBe(false);
-    expect(body.error?.code).toBe('HERMES');
+    expect(body.error?.code).toBe('PHASE_CONFLICT');
+    expect(body.error?.message).toMatch(
+      /operation not allowed in phase|illegal transition|cannot stop from/,
+    );
     await app.close();
   });
 

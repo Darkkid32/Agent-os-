@@ -23,6 +23,16 @@
       "import": "./dist/kernel-permissions.js",
       "default": "./dist/kernel-permissions.js"
     },
+    "./adapter-metadata": {
+      "types": "./dist/adapter-metadata.d.ts",
+      "import": "./dist/adapter-metadata.js",
+      "default": "./dist/adapter-metadata.js"
+    },
+    "./adapter-errors": {
+      "types": "./dist/adapter-errors.d.ts",
+      "import": "./dist/adapter-errors.js",
+      "default": "./dist/adapter-errors.js"
+    },
     "./package.json": "./package.json"
   },
   "files": [

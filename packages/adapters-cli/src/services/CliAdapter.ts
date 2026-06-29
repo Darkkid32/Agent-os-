@@ -14,7 +14,12 @@
  *   - Adapter health is the CLI's own, NOT hermes.health().
  */
 import { createInterface, type Interface as Readline } from 'node:readline';
-import { err, now, ok, type Result, type Timestamp } from '@agent-os/core';
+import { err, now, ok, type Result } from '@agent-os/core';
+import type {
+  AdapterHealth,
+  AdapterHealthStatus,
+  AdapterMetadata,
+} from '@agent-os/core/adapter-metadata';
 import type { HermesPort } from '@agent-os/hermes';
 import type { Command, CommandArgs } from '../interfaces/Command.js';
 import { createCommandRegistry, type CommandRegistry } from './CommandRegistry.js';
@@ -37,20 +42,14 @@ import { versionCommand } from '../commands/VersionCommand.js';
 export const CLI_PACKAGE_NAME = '@agent-os/adapters-cli' as const;
 export const CLI_PACKAGE_VERSION = '0.1.0' as const;
 
-export interface CliMetadata {
-  readonly name: string;
-  readonly version: string;
-  readonly interfaceType: 'cli';
-  readonly supportedOperations: readonly string[];
-}
+/**
+ * Per-platform.md §4.3, every adapter declares its identity as
+ * `AdapterMetadata`. The CLI's `interfaceType` is fixed to `'cli'`.
+ */
+export type CliMetadata = AdapterMetadata;
 
-export type CliAdapterHealthStatus = 'healthy' | 'degraded' | 'failed' | 'unknown';
-
-export interface CliAdapterHealth {
-  readonly status: CliAdapterHealthStatus;
-  readonly detail?: string;
-  readonly at: Timestamp;
-}
+export type CliAdapterHealthStatus = AdapterHealthStatus;
+export type CliAdapterHealth = AdapterHealth;
 
 export interface CliInitConfig {
   readonly hermes: HermesPort;

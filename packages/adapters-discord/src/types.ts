@@ -7,6 +7,11 @@
  * a DiscordMessage that the gateway layer formats into a discord.js
  * interaction reply.
  */
+import type {
+  AdapterHealth,
+  AdapterHealthStatus,
+  AdapterMetadata,
+} from '@agent-os/core/adapter-metadata';
 import type { HermesPort } from '@agent-os/hermes';
 import type { DiscordAction, DiscordRole } from './permissions.js';
 
@@ -63,17 +68,7 @@ export interface DiscordInitConfig {
   readonly adminUserIds: readonly string[];
 }
 
-export interface DiscordMetadata {
-  readonly name: string;
-  readonly version: string;
-  readonly interfaceType: 'discord';
-  readonly supportedOperations: readonly string[];
-}
+export type DiscordMetadata = AdapterMetadata;
 
-export type DiscordAdapterHealthStatus = 'healthy' | 'degraded' | 'failed' | 'unknown';
-
-export interface DiscordAdapterHealth {
-  readonly status: DiscordAdapterHealthStatus;
-  readonly detail?: string;
-  readonly at: number;
-}
+export type DiscordAdapterHealthStatus = AdapterHealthStatus;
+export type DiscordAdapterHealth = AdapterHealth;
