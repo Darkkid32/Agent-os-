@@ -23,6 +23,8 @@ describe('adapter-metadata', () => {
       expectTypeOf<'telegram'>().toMatchTypeOf<AdapterInterfaceType>();
       expectTypeOf<'webhook'>().toMatchTypeOf<AdapterInterfaceType>();
       expectTypeOf<'mcp'>().toMatchTypeOf<AdapterInterfaceType>();
+      expectTypeOf<'whatsapp'>().toMatchTypeOf<AdapterInterfaceType>();
+      expectTypeOf<'email'>().toMatchTypeOf<AdapterInterfaceType>();
     });
   });
 

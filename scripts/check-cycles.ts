@@ -36,6 +36,7 @@ const PACKAGE_SLUGS = [
   'adapters-telegram',
   'adapters-webhook',
   'adapters-mcp',
+  'adapters-whatsapp',
 ] as const;
 
 const APP_SLUGS = ['api', 'dashboard'] as const;

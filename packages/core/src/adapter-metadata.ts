@@ -19,7 +19,8 @@
  */
 import type { Timestamp } from './index.js';
 
-export type AdapterInterfaceType = 'cli' | 'rest' | 'discord' | 'telegram' | 'webhook' | 'mcp';
+export type AdapterInterfaceType =
+  'cli' | 'rest' | 'discord' | 'telegram' | 'webhook' | 'mcp' | 'whatsapp' | 'email';
 
 /**
  * Identity of a single adapter.
