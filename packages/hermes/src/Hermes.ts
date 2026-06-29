@@ -1,5 +1,6 @@
 import { err, now as timestampNow, type Result, type Timestamp } from '@agent-os/core';
 import type { EventBus } from '@agent-os/event-bus';
+import { type Logger, createLogger } from '@agent-os/observability';
 import type { HermesConfig } from './HermesConfig.js';
 import {
   createHermesLifecycle,
@@ -104,6 +105,7 @@ export interface HermesKernelOptions {
   readonly lifecycle?: HermesLifecycle;
   readonly registry?: HermesModuleRegistry;
   readonly healthMonitor?: HermesHealthMonitor;
+  readonly logger?: Logger;
 }
 
 /**
@@ -124,6 +126,8 @@ const noopContainer: ContainerPort = {
 };
 
 export const createHermes = (config: HermesConfig, options: HermesKernelOptions = {}): Hermes => {
+  const rootLogger = options.logger ?? createLogger();
+  const logger = rootLogger.child('hermes');
   const lifecycle: HermesLifecycle = options.lifecycle ?? createHermesLifecycle();
   const registry: HermesModuleRegistry = options.registry ?? createHermesModuleRegistry();
   const healthMonitor: HermesHealthMonitor =
@@ -162,12 +166,14 @@ export const createHermes = (config: HermesConfig, options: HermesKernelOptions 
           container: noopContainer as ContainerPort,
           dispatcher: dispatcherPort,
           dynamicImport: options.dynamicImport,
+          logger: rootLogger.child('plugin-loader'),
         })
       : undefined;
 
   // ----- Uptime derivation (read-only projection of the phase) -----
   let startedAt: Timestamp | undefined;
-  lifecycle.onTransition((_from, to) => {
+  lifecycle.onTransition((from, to) => {
+    logger.info('lifecycle transition', { phase: `${from} → ${to}` });
     if (to === 'RUNNING') startedAt = timestampNow();
   });
 
@@ -233,6 +239,7 @@ export const createHermes = (config: HermesConfig, options: HermesKernelOptions 
       if (lifecycle.currentPhase() === 'RUNNING') return { ok: true, value: undefined };
 
       if (lifecycle.isTerminal()) {
+        logger.warn('start blocked: terminal phase', { phase: lifecycle.currentPhase() });
         return err(
           new Error(
             `Hermes: cannot start from terminal phase ${lifecycle.currentPhase()}. Create a new instance.`,
@@ -241,8 +248,10 @@ export const createHermes = (config: HermesConfig, options: HermesKernelOptions 
       }
 
       try {
+        logger.info('starting');
         lifecycle.transition('STARTING');
       } catch (e) {
+        logger.error('start failed', { error: e instanceof Error ? e.message : String(e) });
         return err(e instanceof Error ? e : new Error(String(e)));
       }
 
@@ -252,13 +261,16 @@ export const createHermes = (config: HermesConfig, options: HermesKernelOptions 
     stop: async (): Promise<Result<void>> => {
       if (lifecycle.currentPhase() === 'STOPPED') return { ok: true, value: undefined };
       if (lifecycle.currentPhase() === 'FAILED') {
+        logger.warn('stop blocked: FAILED state');
         return err(new Error(`Hermes: cannot stop from FAILED state.`));
       }
 
       try {
+        logger.info('stopping');
         lifecycle.transition('STOPPING');
         await drainModules();
       } catch (e) {
+        logger.error('stop failed', { error: e instanceof Error ? e.message : String(e) });
         try {
           lifecycle.transition('FAILED');
         } catch {
@@ -281,6 +293,10 @@ export const createHermes = (config: HermesConfig, options: HermesKernelOptions 
         assertPhase('STARTING');
       } catch (e) {
         if (spec.required) {
+          logger.error('required module registration failed', {
+            module: spec.name,
+            error: e instanceof Error ? e.message : String(e),
+          });
           try {
             lifecycle.transition('FAILED');
           } catch {
@@ -291,7 +307,13 @@ export const createHermes = (config: HermesConfig, options: HermesKernelOptions 
       }
       // §5.4: failure of a required module transitions Hermes to FAILED.
       const result = registry.registerModule(spec);
-      if (!result.ok && spec.required) {
+      if (result.ok) {
+        logger.info('module registered', { module: spec.name });
+      } else if (spec.required) {
+        logger.error('required module registration failed', {
+          module: spec.name,
+          error: result.error.message,
+        });
         try {
           lifecycle.transition('FAILED');
         } catch {

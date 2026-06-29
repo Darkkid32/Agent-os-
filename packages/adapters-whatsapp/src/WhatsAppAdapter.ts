@@ -19,6 +19,7 @@
  */
 import type { HermesPort } from '@agent-os/hermes';
 import { now as coreNow } from '@agent-os/core';
+import { type Logger, createLogger, withSpan } from '@agent-os/observability';
 
 import {
   type CommandError,
@@ -86,6 +87,7 @@ export class WhatsAppAdapter {
   private readonly hermes: HermesPort;
   private readonly initConfig: WhatsAppInitConfig;
   private readonly commands: readonly WhatsAppCommand[];
+  private readonly logger: Logger;
 
   private started: boolean;
   private lastError: string | undefined;
@@ -96,6 +98,7 @@ export class WhatsAppAdapter {
     this.initConfig = init;
     this.resolvedAdminPhones = init.adminPhoneNumbers;
     this.commands = COMMANDS;
+    this.logger = (init.logger ?? createLogger()).child('whatsapp');
     this.metadata = {
       name: ADAPTER_NAME,
       version: ADAPTER_VERSION,
@@ -120,21 +123,20 @@ export class WhatsAppAdapter {
       throw new Error(`${ADAPTER_NAME}: webhookSecret is required.`);
     }
     this.resolvedAdminPhones = this.initConfig.adminPhoneNumbers;
+    this.logger.info('initialized');
   }
 
-  /**
-   * Start the adapter. Marks the adapter as ready to receive messages.
-   * The consumer (apps/api) owns the HTTP endpoint lifecycle.
-   */
   public async start(): Promise<void> {
     if (this.started) return;
     this.started = true;
     this.lastError = undefined;
+    this.logger.info('started');
   }
 
   public async stop(): Promise<void> {
     if (!this.started) return;
     this.started = false;
+    this.logger.info('stopped');
   }
 
   public health(): WhatsAppAdapterHealth {
@@ -159,57 +161,71 @@ export class WhatsAppAdapter {
    * via the WhatsApp Business API.
    */
   public async handleMessage(senderPhone: string, messageText: string): Promise<WhatsAppMessage> {
-    if (!this.started) {
-      return replyWithError({ code: 'INTERNAL', message: 'Adapter not started.' });
-    }
+    return withSpan('whatsapp.handleMessage', async (span) => {
+      span.setAttribute('sender_phone', senderPhone);
 
-    const role = roleFor(senderPhone, this.resolvedAdminPhones);
-
-    const commandName = this.parseCommand(messageText);
-    if (!commandName) {
-      return replyWithError({
-        code: 'VALIDATION',
-        message: 'Unknown command. Send "help" for a list of commands.',
-      });
-    }
-
-    const cmd = this.commands.find((c) => c.name === commandName);
-    if (!cmd) {
-      return replyWithError({
-        code: 'VALIDATION',
-        message: 'Unknown command. Send "help" for a list of commands.',
-      });
-    }
-
-    const wctx: WhatsAppContext = {
-      hermes: this.hermes,
-      senderPhone,
-      role,
-      now: coreNow,
-    };
-
-    try {
-      requireRole(role, cmd.requires);
-    } catch (err) {
-      if (isPermissionError(err)) {
-        return replyWithPermission(cmd.name);
+      if (!this.started) {
+        return replyWithError({ code: 'INTERNAL', message: 'Adapter not started.' });
       }
-      return replyWithError(toCommandError(err));
-    }
 
-    const args = { options: {} as Record<string, string> };
-    let result;
-    try {
-      result = await cmd.handler(wctx, args);
-    } catch (err) {
-      this.lastError = err instanceof Error ? err.message : String(err);
-      return replyWithError(toCommandError(err));
-    }
+      const role = roleFor(senderPhone, this.resolvedAdminPhones);
 
-    if (result.ok) {
-      return replyWithMessage(result.value);
-    }
-    return replyWithError(result.error);
+      const commandName = this.parseCommand(messageText);
+      if (!commandName) {
+        this.logger.warn('unknown command', { senderPhone });
+        return replyWithError({
+          code: 'VALIDATION',
+          message: 'Unknown command. Send "help" for a list of commands.',
+        });
+      }
+
+      span.setAttribute('command', commandName);
+
+      const cmd = this.commands.find((c) => c.name === commandName);
+      if (!cmd) {
+        this.logger.warn('unknown command', { command: commandName, senderPhone });
+        return replyWithError({
+          code: 'VALIDATION',
+          message: 'Unknown command. Send "help" for a list of commands.',
+        });
+      }
+
+      this.logger.info('command start', { command: commandName, senderPhone });
+
+      const wctx: WhatsAppContext = {
+        hermes: this.hermes,
+        senderPhone,
+        role,
+        now: coreNow,
+      };
+
+      try {
+        requireRole(role, cmd.requires);
+      } catch (err) {
+        if (isPermissionError(err)) {
+          this.logger.warn('permission denied', { command: commandName, senderPhone });
+          return replyWithPermission(cmd.name);
+        }
+        return replyWithError(toCommandError(err));
+      }
+
+      const args = { options: {} as Record<string, string> };
+      let result;
+      try {
+        result = await cmd.handler(wctx, args);
+      } catch (err) {
+        this.lastError = err instanceof Error ? err.message : String(err);
+        this.logger.error('command failed', { command: commandName, error: this.lastError });
+        return replyWithError(toCommandError(err));
+      }
+
+      if (result.ok) {
+        this.logger.info('command end', { command: commandName, success: true });
+        return replyWithMessage(result.value);
+      }
+      this.logger.info('command end', { command: commandName, success: false });
+      return replyWithError(result.error);
+    });
   }
 
   private parseCommand(text: string): string | null {

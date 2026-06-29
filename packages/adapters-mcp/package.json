@@ -44,6 +44,7 @@
   "dependencies": {
     "@agent-os/core": "workspace:*",
     "@agent-os/hermes": "workspace:*",
+    "@agent-os/observability": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "zod": "^3.25.0"
   },

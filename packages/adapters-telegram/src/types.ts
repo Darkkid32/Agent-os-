@@ -16,6 +16,7 @@ import type {
 } from '@agent-os/core/adapter-metadata';
 import type { HermesPort } from '@agent-os/hermes';
 import type { Result } from '@agent-os/core';
+import type { Logger } from '@agent-os/observability';
 import type { TelegramAction, TelegramRole } from './permissions.js';
 
 /**
@@ -69,6 +70,7 @@ export interface TelegramInitConfig {
   readonly botToken: string;
   readonly adminUserIds: readonly string[];
   readonly webhookUrl?: string;
+  readonly logger?: Logger;
 }
 
 export type TelegramTransport = 'polling' | 'webhook';

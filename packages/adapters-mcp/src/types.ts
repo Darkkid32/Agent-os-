@@ -16,6 +16,7 @@ import type {
   AdapterMetadata,
 } from '@agent-os/core/adapter-metadata';
 import type { HermesPort } from '@agent-os/hermes';
+import type { Logger } from '@agent-os/observability';
 import type { McpAction, McpRole } from './permissions.js';
 
 export interface McpInitConfig {
@@ -30,6 +31,8 @@ export interface McpInitConfig {
    * deployments are expected to wire an authenticated resolver.
    */
   readonly resolveRole?: (ctx: McpRequestContext) => McpRole;
+  /** Optional structured logger. */
+  readonly logger?: Logger;
 }
 
 export interface McpRequestContext {

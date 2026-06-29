@@ -27,6 +27,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import type { HermesPort } from '@agent-os/hermes';
 import { now as coreNow } from '@agent-os/core';
+import { type Logger, createLogger, withSpan } from '@agent-os/observability';
 
 import {
   type McpAdapterHealth,
@@ -69,6 +70,7 @@ export class McpAdapter {
   private readonly hermes: HermesPort;
   private readonly config: McpInitConfig;
   private readonly tools: readonly McpToolDefinition[];
+  private readonly logger: Logger;
 
   private server: McpServer | undefined;
   private initialized: boolean;
@@ -79,6 +81,7 @@ export class McpAdapter {
     this.hermes = hermes;
     this.config = config;
     this.tools = ALL_TOOLS;
+    this.logger = (config.logger ?? createLogger()).child('mcp');
     this.initialized = false;
     this.started = false;
   }
@@ -104,6 +107,7 @@ export class McpAdapter {
     }
     this.server = server;
     this.initialized = true;
+    this.logger.info('initialized', { toolCount: this.tools.length });
   }
 
   public async start(): Promise<void> {
@@ -114,16 +118,20 @@ export class McpAdapter {
     if (this.config.transport !== 'stdio') {
       throw new Error(`${ADAPTER_NAME}: unsupported transport "${this.config.transport}".`);
     }
+    this.logger.info('starting');
     await this.server.connect(new StdioServerTransport());
     this.started = true;
     this.lastError = undefined;
+    this.logger.info('started');
   }
 
   public async stop(): Promise<void> {
     if (!this.server) return;
     if (!this.started) return;
+    this.logger.info('stopping');
     await this.server.close();
     this.started = false;
+    this.logger.info('stopped');
   }
 
   public health(): McpAdapterHealth {
@@ -151,28 +159,37 @@ export class McpAdapter {
   }
 
   private async dispatch(tool: McpToolDefinition): Promise<McpToolResult> {
-    const role = this.resolveRole({ toolName: tool.name });
-    const tctx: McpToolContext = {
-      hermes: this.hermes,
-      role,
-      toolName: tool.name,
-    };
+    return withSpan(`mcp.${tool.name}`, async (span) => {
+      span.setAttribute('tool', tool.name);
+      const role = this.resolveRole({ toolName: tool.name });
+      const tctx: McpToolContext = {
+        hermes: this.hermes,
+        role,
+        toolName: tool.name,
+      };
 
-    try {
-      requireRole(role, tool.requires);
-    } catch (err) {
-      if (isPermissionError(err)) {
-        return formatPermissionDenied(tool.name);
+      this.logger.info('tool start', { tool: tool.name });
+
+      try {
+        requireRole(role, tool.requires);
+      } catch (err) {
+        if (isPermissionError(err)) {
+          this.logger.warn('permission denied', { tool: tool.name });
+          return formatPermissionDenied(tool.name);
+        }
+        return toToolResult(err);
       }
-      return toToolResult(err);
-    }
 
-    try {
-      return await tool.handler(tctx);
-    } catch (err) {
-      this.lastError = err instanceof Error ? err.message : String(err);
-      return toToolResult(err);
-    }
+      try {
+        const result = await tool.handler(tctx);
+        this.logger.info('tool end', { tool: tool.name, success: !result.isError });
+        return result;
+      } catch (err) {
+        this.lastError = err instanceof Error ? err.message : String(err);
+        this.logger.error('tool failed', { tool: tool.name, error: this.lastError });
+        return toToolResult(err);
+      }
+    });
   }
 
   private resolveRole(ctx: { toolName: string }): 'admin' | 'viewer' {

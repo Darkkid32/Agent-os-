@@ -24,6 +24,7 @@
  */
 import { now as coreNow } from '@agent-os/core';
 import type { HermesPort } from '@agent-os/hermes';
+import { type Logger, createLogger, withSpan } from '@agent-os/observability';
 
 import {
   type BodyParser,
@@ -65,6 +66,7 @@ export class WebhookAdapter {
   private readonly timeoutMs: number;
   private readonly signatureHeader: string | undefined;
   private readonly signatureVerifier: SignatureVerifier | undefined;
+  private readonly logger: Logger;
 
   private initialized: boolean;
   private lastError: string | undefined;
@@ -77,6 +79,7 @@ export class WebhookAdapter {
     this.timeoutMs = config.timeoutMs ?? DEFAULT_TIMEOUT_MS;
     this.signatureHeader = config.signatures?.header.toLowerCase();
     this.signatureVerifier = config.signatures?.verifier;
+    this.logger = (config.logger ?? createLogger()).child('webhook');
     this.initialized = false;
   }
 
@@ -84,17 +87,18 @@ export class WebhookAdapter {
     if (this.initialized) return;
     validateRoutes(this.routes);
     this.initialized = true;
+    this.logger.info('initialized', { routeCount: this.routes.length });
   }
 
   public async start(): Promise<void> {
     if (!this.initialized) {
       throw new Error(`${ADAPTER_NAME}: initialize() must be called before start().`);
     }
-    // Webhook adapter is stateless. start() is a guard.
+    this.logger.info('started');
   }
 
   public async stop(): Promise<void> {
-    // No-op. Lifecycle exists only for symmetry with other adapters.
+    this.logger.info('stopped');
   }
 
   public health(): WebhookAdapterHealth {
@@ -125,52 +129,66 @@ export class WebhookAdapter {
    * returned Fetch `Response` into a framework reply.
    */
   public async handle(req: Request): Promise<Response> {
-    if (!this.initialized) {
-      return internalErrorResponse(`${ADAPTER_NAME}: not initialized`);
-    }
+    return withSpan('webhook.handle', async (span) => {
+      span.setAttribute('method', req.method);
+      span.setAttribute('url', req.url);
 
-    let parsed: ParsedRequest;
-    try {
-      parsed = await this.parseRequest(req);
-    } catch (e) {
-      this.lastError = toHandlerError(e).message;
-      return internalErrorResponse(toHandlerError(e).message);
-    }
-
-    if (this.signatureVerifier && this.signatureHeader) {
-      const headerValue = parsed.headers.get(this.signatureHeader);
-      if (!headerValue) {
-        return unauthorizedResponse('signature header missing');
+      if (!this.initialized) {
+        return internalErrorResponse(`${ADAPTER_NAME}: not initialized`);
       }
-      const verifyResult = this.signatureVerifier(parsed.raw, parsed.headers);
-      if (!verifyResult.ok) {
-        return unauthorizedResponse(verifyResult.error.message);
+
+      let parsed: ParsedRequest;
+      try {
+        parsed = await this.parseRequest(req);
+      } catch (e) {
+        this.lastError = toHandlerError(e).message;
+        this.logger.error('request parse failed', { error: this.lastError });
+        return internalErrorResponse(toHandlerError(e).message);
       }
-    }
 
-    const url = new URL(req.url);
-    const match = matchRoute(this.routes, req.method, url.pathname);
-    if (!match.ok) {
-      const e = match.error;
-      if (e.code === 'METHOD_NOT_ALLOWED' && e.allow) {
-        return methodNotAllowedResponse(e.allow as readonly string[], e.message);
+      if (this.signatureVerifier && this.signatureHeader) {
+        const headerValue = parsed.headers.get(this.signatureHeader);
+        if (!headerValue) {
+          this.logger.warn('signature header missing');
+          return unauthorizedResponse('signature header missing');
+        }
+        const verifyResult = this.signatureVerifier(parsed.raw, parsed.headers);
+        if (!verifyResult.ok) {
+          this.logger.warn('signature verification failed', { error: verifyResult.error.message });
+          return unauthorizedResponse(verifyResult.error.message);
+        }
       }
-      return notFoundResponse(e.message);
-    }
 
-    let handlerResult;
-    try {
-      handlerResult = await withTimeout(
-        match.value.route.handler(parsed, this.hermes),
-        this.timeoutMs,
-      );
-    } catch (e) {
-      this.lastError = toHandlerError(e).message;
-      return internalErrorResponse(toHandlerError(e).message);
-    }
+      const url = new URL(req.url);
+      const match = matchRoute(this.routes, req.method, url.pathname);
+      if (!match.ok) {
+        const e = match.error;
+        if (e.code === 'METHOD_NOT_ALLOWED' && e.allow) {
+          return methodNotAllowedResponse(e.allow as readonly string[], e.message);
+        }
+        return notFoundResponse(e.message);
+      }
 
-    if (handlerResult.ok) return fromResponseBody(handlerResult.value);
-    return errorResponse(handlerResult.error, statusFor(handlerResult.error));
+      span.setAttribute('route', match.value.route.path);
+
+      let handlerResult;
+      try {
+        handlerResult = await withTimeout(
+          match.value.route.handler(parsed, this.hermes),
+          this.timeoutMs,
+        );
+      } catch (e) {
+        this.lastError = toHandlerError(e).message;
+        this.logger.error('handler failed', {
+          route: match.value.route.path,
+          error: this.lastError,
+        });
+        return internalErrorResponse(toHandlerError(e).message);
+      }
+
+      if (handlerResult.ok) return fromResponseBody(handlerResult.value);
+      return errorResponse(handlerResult.error, statusFor(handlerResult.error));
+    });
   }
 
   private async parseRequest(req: Request): Promise<ParsedRequest> {

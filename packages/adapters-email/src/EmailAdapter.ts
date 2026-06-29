@@ -26,6 +26,7 @@
  */
 import type { HermesPort } from '@agent-os/hermes';
 import { now as coreNow } from '@agent-os/core';
+import { type Logger, createLogger, withSpan } from '@agent-os/observability';
 
 import {
   type CommandError,
@@ -101,6 +102,7 @@ export class EmailAdapter {
   private readonly hermes: HermesPort;
   private readonly initConfig: EmailInitConfig;
   private readonly commands: readonly EmailCommand[];
+  private readonly logger: Logger;
 
   private started: boolean;
   private lastError: string | undefined;
@@ -111,12 +113,13 @@ export class EmailAdapter {
     this.initConfig = init;
     this.resolvedAdminEmails = init.adminEmails;
     this.commands = COMMANDS;
+    this.logger = (init.logger ?? createLogger()).child('email');
     this.metadata = {
       name: ADAPTER_NAME,
       version: ADAPTER_VERSION,
       interfaceType: 'email',
       supportedOperations: SUPPORTED_OPERATIONS,
-      transport: init.mode === 'ses-webhook' ? 'ses-webhook' : 'imap',
+      transport: init.mode === 'imap-polling' ? 'imap' : 'ses-webhook',
       mode: init.mode,
     };
     this.started = false;
@@ -158,6 +161,7 @@ export class EmailAdapter {
       }
     }
     this.resolvedAdminEmails = this.initConfig.adminEmails;
+    this.logger.info('initialized', { mode: this.initConfig.mode });
   }
 
   /**
@@ -168,11 +172,13 @@ export class EmailAdapter {
     if (this.started) return;
     this.started = true;
     this.lastError = undefined;
+    this.logger.info('started');
   }
 
   public async stop(): Promise<void> {
     if (!this.started) return;
     this.started = false;
+    this.logger.info('stopped');
   }
 
   public health(): EmailAdapterHealth {
@@ -195,56 +201,69 @@ export class EmailAdapter {
    * the appropriate channel (IMAP reply or SES send).
    */
   public async handleMessage(senderEmail: string, subject: string): Promise<EmailMessage> {
-    if (!this.started) {
-      return replyWithError({ code: 'INTERNAL', message: 'Adapter not started.' });
-    }
+    return withSpan('email.handleMessage', async (span) => {
+      span.setAttribute('sender_email', senderEmail);
 
-    const role = roleFor(senderEmail, this.resolvedAdminEmails);
-    const parsed = parseEmailSubject(subject, this.initConfig.commandPrefix);
-
-    if (!parsed || !isKnownCommand(parsed.command)) {
-      return replyWithError({
-        code: 'VALIDATION',
-        message: 'Unknown command. Send "help" for a list of commands.',
-      });
-    }
-
-    const cmd = this.commands.find((c) => c.name === parsed.command);
-    if (!cmd) {
-      return replyWithError({
-        code: 'VALIDATION',
-        message: 'Unknown command. Send "help" for a list of commands.',
-      });
-    }
-
-    const ectx: EmailContext = {
-      hermes: this.hermes,
-      senderEmail,
-      role,
-      now: coreNow,
-    };
-
-    try {
-      requireRole(role, cmd.requires);
-    } catch (err) {
-      if (isPermissionError(err)) {
-        return replyWithPermission(cmd.name);
+      if (!this.started) {
+        return replyWithError({ code: 'INTERNAL', message: 'Adapter not started.' });
       }
-      return replyWithError(toCommandError(err));
-    }
 
-    const args = { options: parsed.args };
-    let result;
-    try {
-      result = await cmd.handler(ectx, args);
-    } catch (err) {
-      this.lastError = err instanceof Error ? err.message : String(err);
-      return replyWithError(toCommandError(err));
-    }
+      const role = roleFor(senderEmail, this.resolvedAdminEmails);
+      const parsed = parseEmailSubject(subject, this.initConfig.commandPrefix);
 
-    if (result.ok) {
-      return replyWithMessage(result.value);
-    }
-    return replyWithError(result.error);
+      if (!parsed || !isKnownCommand(parsed.command)) {
+        this.logger.warn('unknown command', { senderEmail });
+        return replyWithError({
+          code: 'VALIDATION',
+          message: 'Unknown command. Send "help" for a list of commands.',
+        });
+      }
+
+      const cmd = this.commands.find((c) => c.name === parsed.command);
+      if (!cmd) {
+        this.logger.warn('unknown command', { command: parsed.command, senderEmail });
+        return replyWithError({
+          code: 'VALIDATION',
+          message: 'Unknown command. Send "help" for a list of commands.',
+        });
+      }
+
+      span.setAttribute('command', cmd.name);
+      this.logger.info('command start', { command: cmd.name, senderEmail });
+
+      const ectx: EmailContext = {
+        hermes: this.hermes,
+        senderEmail,
+        role,
+        now: coreNow,
+      };
+
+      try {
+        requireRole(role, cmd.requires);
+      } catch (err) {
+        if (isPermissionError(err)) {
+          this.logger.warn('permission denied', { command: cmd.name, senderEmail });
+          return replyWithPermission(cmd.name);
+        }
+        return replyWithError(toCommandError(err));
+      }
+
+      const args = { options: parsed.args };
+      let result;
+      try {
+        result = await cmd.handler(ectx, args);
+      } catch (err) {
+        this.lastError = err instanceof Error ? err.message : String(err);
+        this.logger.error('command failed', { command: cmd.name, error: this.lastError });
+        return replyWithError(toCommandError(err));
+      }
+
+      if (result.ok) {
+        this.logger.info('command end', { command: cmd.name, success: true });
+        return replyWithMessage(result.value);
+      }
+      this.logger.info('command end', { command: cmd.name, success: false });
+      return replyWithError(result.error);
+    });
   }
 }

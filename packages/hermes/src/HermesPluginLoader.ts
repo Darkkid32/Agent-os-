@@ -1,6 +1,7 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { extname, join } from 'node:path';
 import type { Result } from '@agent-os/core';
+import type { Logger } from '@agent-os/observability';
 import type { HermesConfig } from './HermesConfig.js';
 import type { HermesModuleRegistry, HermesModuleSpec } from './HermesModuleRegistry.js';
 
@@ -49,6 +50,14 @@ export interface PluginDynamicImport {
 export interface PluginLogger {
   readonly warn: (message: string) => void;
 }
+
+/**
+ * Adapter that wraps an observability Logger to satisfy the PluginLogger
+ * interface. The PluginLoader only calls `.warn()`.
+ */
+const toPluginLogger = (logger: Logger): PluginLogger => ({
+  warn: (message: string): void => logger.warn(message),
+});
 
 export interface PluginFacadeOptions {
   readonly container: PluginContainerPort;
@@ -135,13 +144,6 @@ const nodeFileSystem = (): HermesFileSystem => ({
   read: (path: string): string => readFileSync(path, 'utf8'),
 });
 
-const consoleLogger: PluginLogger = {
-  warn: (message: string): void => {
-    // eslint-disable-next-line no-console
-    console.warn(message);
-  },
-};
-
 /**
  * Validates that a discovered entry has a non-empty path and content.
  * Does not invoke the register function; that is loadPlugin()'s job.
@@ -172,14 +174,19 @@ export interface HermesPluginLoaderOptions {
   readonly dispatcher: PluginDispatcherPort;
   readonly fileSystem?: HermesFileSystem;
   readonly dynamicImport?: PluginDynamicImport;
-  readonly logger?: PluginLogger;
+  readonly logger?: PluginLogger | Logger;
 }
 
 export const createHermesPluginLoader = (
   options: HermesPluginLoaderOptions,
 ): HermesPluginLoader => {
   const fs = options.fileSystem ?? nodeFileSystem();
-  const logger = options.logger ?? consoleLogger;
+  const logger: PluginLogger =
+    options.logger === undefined
+      ? { warn: (): void => {} }
+      : 'warn' in options.logger
+        ? options.logger
+        : toPluginLogger(options.logger);
   const facade = buildFacade({
     registry: options.registry,
     config: options.config,

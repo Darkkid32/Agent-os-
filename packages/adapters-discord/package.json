@@ -42,6 +42,7 @@
   "dependencies": {
     "@agent-os/core": "workspace:*",
     "@agent-os/hermes": "workspace:*",
+    "@agent-os/observability": "workspace:*",
     "discord.js": "^14.16.0"
   },
   "devDependencies": {

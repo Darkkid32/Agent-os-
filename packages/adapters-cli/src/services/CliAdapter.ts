@@ -21,6 +21,7 @@ import type {
   AdapterMetadata,
 } from '@agent-os/core/adapter-metadata';
 import type { HermesPort } from '@agent-os/hermes';
+import { type Logger, createLogger, withSpan } from '@agent-os/observability';
 import type { Command, CommandArgs } from '../interfaces/Command.js';
 import { createCommandRegistry, type CommandRegistry } from './CommandRegistry.js';
 import { createPermissionService, type CliRole, type PermissionService } from './Permissions.js';
@@ -54,6 +55,7 @@ export type CliAdapterHealth = AdapterHealth;
 export interface CliInitConfig {
   readonly hermes: HermesPort;
   readonly role: CliRole;
+  readonly logger?: Logger;
 }
 
 export interface CliDispatchResult {
@@ -95,6 +97,7 @@ export const createCliAdapter = (): CliAdapter => {
   let registry: CommandRegistry | undefined;
   let permissions: PermissionService | undefined;
   let hermes: HermesPort | undefined;
+  let logger: Logger | undefined;
   let initialized = false;
   let started = false;
 
@@ -128,40 +131,50 @@ export const createCliAdapter = (): CliAdapter => {
   };
 
   const handleCommand = async (cmd: Command, parsed: ParsedArgs): Promise<CliDispatchResult> => {
-    const output: OutputMode = parsed.json ? 'json' : 'human';
-    const ctx = buildContext(output);
-    const args: CommandArgs = { positional: parsed.positional, flags: parsed.flags };
+    return withSpan(`cli.${cmd.name}`, async (span) => {
+      const output: OutputMode = parsed.json ? 'json' : 'human';
+      const ctx = buildContext(output);
+      const args: CommandArgs = { positional: parsed.positional, flags: parsed.flags };
+      logger?.info('command start', { command: cmd.name });
 
-    const handlerResult: Result<unknown, CommandError> = await (async (): Promise<
-      Result<unknown, CommandError>
-    > => {
-      try {
-        if (cmd.requires) {
-          try {
-            ctx.permissions.require(cmd.requires);
-          } catch (e) {
-            if (e instanceof PermissionError) {
-              return { ok: false, error: e.commandError };
+      const handlerResult: Result<unknown, CommandError> = await (async (): Promise<
+        Result<unknown, CommandError>
+      > => {
+        try {
+          if (cmd.requires) {
+            try {
+              ctx.permissions.require(cmd.requires);
+            } catch (e) {
+              if (e instanceof PermissionError) {
+                return { ok: false, error: e.commandError };
+              }
+              throw e;
             }
-            throw e;
           }
+          return await cmd.handler(ctx, args);
+        } catch (e) {
+          const code: CliErrorCode = 'INTERNAL';
+          logger?.error('command failed', {
+            command: cmd.name,
+            error: e instanceof Error ? e.message : String(e),
+          });
+          return {
+            ok: false,
+            error: {
+              code,
+              message: e instanceof Error ? e.message : String(e),
+            },
+          };
         }
-        return await cmd.handler(ctx, args);
-      } catch (e) {
-        const code: CliErrorCode = 'INTERNAL';
-        return {
-          ok: false,
-          error: {
-            code,
-            message: e instanceof Error ? e.message : String(e),
-          },
-        };
-      }
-    })();
+      })();
 
-    const rendered = renderResult(handlerResult, output);
-    const exitCode = handlerResult.ok ? 0 : mapErrorToExitCode(handlerResult.error.code);
-    return { exitCode, rendered };
+      const rendered = renderResult(handlerResult, output);
+      const exitCode = handlerResult.ok ? 0 : mapErrorToExitCode(handlerResult.error.code);
+      span.setAttribute('command', cmd.name);
+      span.setAttribute('exit_code', exitCode);
+      logger?.info('command end', { command: cmd.name, exitCode });
+      return { exitCode, rendered };
+    });
   };
 
   const dispatchInternal = async (argv: readonly string[]): Promise<CliDispatchResult> => {
@@ -216,8 +229,10 @@ export const createCliAdapter = (): CliAdapter => {
       try {
         hermes = config.hermes;
         permissions = createPermissionService(config.role);
+        logger = (config.logger ?? createLogger()).child('cli');
         if (!registry) registry = buildDefaultRegistry();
         initialized = true;
+        logger.info('initialized');
         return ok(undefined);
       } catch (e) {
         return err(e instanceof Error ? e : new Error(String(e)));
@@ -229,11 +244,13 @@ export const createCliAdapter = (): CliAdapter => {
         return err(new Error('CliAdapter: cannot start before initialize().'));
       }
       started = true;
+      logger?.info('started');
       return ok(undefined);
     },
 
     stop: async (): Promise<Result<void>> => {
       started = false;
+      logger?.info('stopped');
       return ok(undefined);
     },
 

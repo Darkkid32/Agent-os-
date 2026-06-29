@@ -41,7 +41,8 @@
   },
   "dependencies": {
     "@agent-os/core": "workspace:*",
-    "@agent-os/hermes": "workspace:*"
+    "@agent-os/hermes": "workspace:*",
+    "@agent-os/observability": "workspace:*"
   },
   "devDependencies": {
     "vitest": "^4.1.9"

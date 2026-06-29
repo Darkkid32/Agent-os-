@@ -34,6 +34,7 @@ import {
 } from 'discord.js';
 import type { HermesPort } from '@agent-os/hermes';
 import { now as coreNow } from '@agent-os/core';
+import { type Logger, createLogger, withSpan } from '@agent-os/observability';
 import {
   type DiscordCommand,
   type DiscordContext,
@@ -63,6 +64,7 @@ interface RuntimeState {
   readonly guildId: string;
   readonly client: Client<true>;
   readonly commands: ReadonlyMap<string, DiscordCommand>;
+  readonly logger: Logger;
 }
 
 export interface DiscordAdapter {
@@ -131,56 +133,70 @@ export const createDiscordAdapter = (): DiscordAdapter => {
     interaction: ChatInputCommandInteraction,
     s: RuntimeState,
   ): Promise<void> => {
-    const commandName = interaction.commandName;
-    const command = s.commands.get(commandName);
+    return withSpan(`discord.${interaction.commandName}`, async (span) => {
+      const commandName = interaction.commandName;
+      const command = s.commands.get(commandName);
+      span.setAttribute('command', commandName);
+      span.setAttribute('user_id', interaction.user.id);
 
-    if (!command) {
-      await interaction.reply(toInteractionReplyOptions(formatUnknownMessage(commandName)));
-      return;
-    }
-
-    const ctx = buildContext(s.hermes, interaction.user.id, s.adminUserIds);
-
-    if (!can(ctx.role, command.requires)) {
-      await interaction.reply(toInteractionReplyOptions(formatPermissionMessage(command.requires)));
-      return;
-    }
-
-    const args = {
-      options: interaction.options as unknown as Readonly<
-        Record<string, string | number | boolean>
-      >,
-    };
-
-    try {
-      const reply = await command.handler(ctx, args);
-      await interaction.reply(toInteractionReplyOptions(reply));
-    } catch (e) {
-      const message =
-        e instanceof PermissionError
-          ? `Permission denied for action "${e.action}".`
-          : e instanceof Error
-            ? e.message
-            : String(e);
-      const errorReply = toInteractionReplyOptions(formatErrorMessage(message));
-      if (interaction.deferred || interaction.replied) {
-        const editOptions: { content?: string; embeds?: typeof errorReply.embeds } = {};
-        if (errorReply.content !== undefined && errorReply.content !== null) {
-          editOptions.content = errorReply.content;
-        }
-        if (errorReply.embeds !== undefined) {
-          editOptions.embeds = errorReply.embeds;
-        }
-        await interaction.editReply(editOptions);
-      } else {
-        await interaction.reply(errorReply);
+      if (!command) {
+        s.logger.warn('unknown command', { command: commandName });
+        await interaction.reply(toInteractionReplyOptions(formatUnknownMessage(commandName)));
+        return;
       }
-    }
+
+      const ctx = buildContext(s.hermes, interaction.user.id, s.adminUserIds);
+
+      if (!can(ctx.role, command.requires)) {
+        s.logger.warn('permission denied', { command: commandName, userId: interaction.user.id });
+        await interaction.reply(
+          toInteractionReplyOptions(formatPermissionMessage(command.requires)),
+        );
+        return;
+      }
+
+      const args = {
+        options: interaction.options as unknown as Readonly<
+          Record<string, string | number | boolean>
+        >,
+      };
+
+      s.logger.info('command start', { command: commandName, userId: interaction.user.id });
+
+      try {
+        const reply = await command.handler(ctx, args);
+        await interaction.reply(toInteractionReplyOptions(reply));
+        s.logger.info('command end', { command: commandName, success: true });
+      } catch (e) {
+        const message =
+          e instanceof PermissionError
+            ? `Permission denied for action "${e.action}".`
+            : e instanceof Error
+              ? e.message
+              : String(e);
+        s.logger.error('command failed', { command: commandName, error: message });
+        const errorReply = toInteractionReplyOptions(formatErrorMessage(message));
+        if (interaction.deferred || interaction.replied) {
+          const editOptions: { content?: string; embeds?: typeof errorReply.embeds } = {};
+          if (errorReply.content !== undefined && errorReply.content !== null) {
+            editOptions.content = errorReply.content;
+          }
+          if (errorReply.embeds !== undefined) {
+            editOptions.embeds = errorReply.embeds;
+          }
+          await interaction.editReply(editOptions);
+        } else {
+          await interaction.reply(errorReply);
+        }
+      }
+    });
   };
 
   return {
     initialize: async (config: DiscordInitConfig, hermes: HermesPort): Promise<void> => {
       if (state) return;
+
+      const adapterLogger = (config.logger ?? createLogger()).child('discord');
 
       const client = new Client({
         intents: [GatewayIntentBits.Guilds],
@@ -198,6 +214,7 @@ export const createDiscordAdapter = (): DiscordAdapter => {
         void rest.put(Routes.applicationGuildCommands(readyClient.user.id, config.guildId), {
           body: slashPayloads,
         });
+        adapterLogger.info('slash commands registered');
       });
 
       client.on('interactionCreate', (interaction) => {
@@ -213,17 +230,24 @@ export const createDiscordAdapter = (): DiscordAdapter => {
         guildId: config.guildId,
         client: client as unknown as Client<true>,
         commands,
+        logger: adapterLogger,
       };
+
+      adapterLogger.info('initialized');
     },
 
     start: async (): Promise<void> => {
       if (!state) throw new Error('DiscordAdapter: not initialized.');
+      state.logger.info('starting');
       await state.client.login(state.botToken);
+      state.logger.info('started');
     },
 
     stop: async (): Promise<void> => {
       if (!state) return;
+      state.logger.info('stopping');
       await state.client.destroy();
+      state.logger.info('stopped');
       state = undefined;
     },
 

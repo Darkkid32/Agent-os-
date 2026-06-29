@@ -172,6 +172,9 @@ importers:
       '@agent-os/hermes':
         specifier: workspace:*
         version: link:../hermes
+      '@agent-os/observability':
+        specifier: workspace:*
+        version: link:../observability
     devDependencies:
       vitest:
         specifier: ^4.1.9
@@ -185,6 +188,9 @@ importers:
       '@agent-os/hermes':
         specifier: workspace:*
         version: link:../hermes
+      '@agent-os/observability':
+        specifier: workspace:*
+        version: link:../observability
       discord.js:
         specifier: ^14.16.0
         version: 14.26.4
@@ -201,6 +207,9 @@ importers:
       '@agent-os/hermes':
         specifier: workspace:*
         version: link:../hermes
+      '@agent-os/observability':
+        specifier: workspace:*
+        version: link:../observability
     devDependencies:
       vitest:
         specifier: ^4.1.9
@@ -214,6 +223,9 @@ importers:
       '@agent-os/hermes':
         specifier: workspace:*
         version: link:../hermes
+      '@agent-os/observability':
+        specifier: workspace:*
+        version: link:../observability
       '@modelcontextprotocol/sdk':
         specifier: ^1.29.0
         version: 1.29.0(zod@3.25.76)
@@ -233,6 +245,9 @@ importers:
       '@agent-os/hermes':
         specifier: workspace:*
         version: link:../hermes
+      '@agent-os/observability':
+        specifier: workspace:*
+        version: link:../observability
       grammy:
         specifier: ^1.36.0
         version: 1.44.0
@@ -249,6 +264,9 @@ importers:
       '@agent-os/hermes':
         specifier: workspace:*
         version: link:../hermes
+      '@agent-os/observability':
+        specifier: workspace:*
+        version: link:../observability
     devDependencies:
       vitest:
         specifier: ^4.1.9
@@ -262,6 +280,9 @@ importers:
       '@agent-os/hermes':
         specifier: workspace:*
         version: link:../hermes
+      '@agent-os/observability':
+        specifier: workspace:*
+        version: link:../observability
     devDependencies:
       vitest:
         specifier: ^4.1.9

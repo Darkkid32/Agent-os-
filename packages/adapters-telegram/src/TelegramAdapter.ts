@@ -29,6 +29,7 @@
 import { Bot, webhookCallback, type Context } from 'grammy';
 import type { HermesPort } from '@agent-os/hermes';
 import { now as coreNow } from '@agent-os/core';
+import { type Logger, createLogger, withSpan } from '@agent-os/observability';
 
 import {
   type CommandError,
@@ -114,6 +115,7 @@ export class TelegramAdapter {
   private readonly initConfig: TelegramInitConfig;
   private readonly transport: TelegramTransport;
   private readonly commands: readonly TelegramCommand[];
+  private readonly logger: Logger;
 
   private bot: Bot | undefined;
   private started: boolean;
@@ -127,6 +129,7 @@ export class TelegramAdapter {
     this.transport = init.webhookUrl ? 'webhook' : 'polling';
     this.resolvedAdminUserIds = init.adminUserIds;
     this.commands = COMMANDS;
+    this.logger = (init.logger ?? createLogger()).child('telegram');
     this.metadata = {
       name: ADAPTER_NAME,
       version: ADAPTER_VERSION,
@@ -158,22 +161,20 @@ export class TelegramAdapter {
     this.resolvedAdminUserIds = init.adminUserIds;
     try {
       await bot.init();
+      this.logger.info('initialized');
     } catch (err) {
       this.lastError = err instanceof Error ? err.message : String(err);
+      this.logger.error('initialize failed', { error: this.lastError });
       throw err;
     }
   }
 
-  /**
-   * Start the adapter. In polling mode, blocks until polling is up.
-   * In webhook mode, returns immediately and exposes the request
-   * handler via `handleUpdate`.
-   */
   public async start(): Promise<void> {
     if (!this.bot) {
       throw new Error(`${ADAPTER_NAME}: initialize() must be called before start().`);
     }
     if (this.started) return;
+    this.logger.info('starting');
     if (this.transport === 'polling') {
       await this.bot.start({
         onStart: (info) => {
@@ -186,16 +187,19 @@ export class TelegramAdapter {
     }
     this.webhookInitialized = true;
     this.started = true;
+    this.logger.info('started');
   }
 
   public async stop(): Promise<void> {
     if (!this.bot) return;
     if (!this.started) return;
+    this.logger.info('stopping');
     if (this.transport === 'polling') {
       await this.bot.stop();
     }
     this.webhookInitialized = false;
     this.started = false;
+    this.logger.info('stopped');
   }
 
   public health(): TelegramAdapterHealth {
@@ -231,52 +235,56 @@ export class TelegramAdapter {
   }
 
   private async dispatchCommand(ctx: Context, cmd: TelegramCommand): Promise<void> {
-    const userId = userIdOf(ctx);
-    const role = roleFor(userId, this.resolvedAdminUserIds);
-    const tctx: TelegramContext = {
-      hermes: this.hermes,
-      userId,
-      chatId: chatIdOf(ctx),
-      role,
-      now: coreNow,
-    };
+    return withSpan(`telegram.${cmd.name}`, async (span) => {
+      const userId = userIdOf(ctx);
+      const role = roleFor(userId, this.resolvedAdminUserIds);
+      span.setAttribute('command', cmd.name);
+      span.setAttribute('user_id', userId);
+      this.logger.info('command start', { command: cmd.name, userId });
+      const tctx: TelegramContext = {
+        hermes: this.hermes,
+        userId,
+        chatId: chatIdOf(ctx),
+        role,
+        now: coreNow,
+      };
 
-    try {
-      requireRole(role, cmd.requires);
-    } catch (err) {
-      if (isPermissionError(err)) {
-        await replyWithPermission(ctx, cmd.name);
+      try {
+        requireRole(role, cmd.requires);
+      } catch (err) {
+        if (isPermissionError(err)) {
+          this.logger.warn('permission denied', { command: cmd.name, userId });
+          await replyWithPermission(ctx, cmd.name);
+          return;
+        }
+        await replyWithError(ctx, toCommandError(err));
         return;
       }
-      await replyWithError(ctx, toCommandError(err));
-      return;
-    }
 
-    const args = { options: {} as Record<string, string> };
-    let result;
-    try {
-      result = await cmd.handler(tctx, args);
-    } catch (err) {
-      this.lastError = err instanceof Error ? err.message : String(err);
-      await replyWithError(ctx, toCommandError(err));
-      return;
-    }
+      const args = { options: {} as Record<string, string> };
+      let result;
+      try {
+        result = await cmd.handler(tctx, args);
+      } catch (err) {
+        this.lastError = err instanceof Error ? err.message : String(err);
+        this.logger.error('command failed', { command: cmd.name, error: this.lastError });
+        await replyWithError(ctx, toCommandError(err));
+        return;
+      }
 
-    if (result.ok) {
-      await replyWithMessage(ctx, result.value);
-      return;
-    }
-    await replyWithError(ctx, result.error);
+      if (result.ok) {
+        this.logger.info('command end', { command: cmd.name, success: true });
+        await replyWithMessage(ctx, result.value);
+        return;
+      }
+      this.logger.info('command end', { command: cmd.name, success: false });
+      await replyWithError(ctx, result.error);
+    });
   }
 
   private logBotIdentity(username: string | undefined): void {
     if (username) {
-      // Operators route stdio transports' stdout/stderr directly to a
-      // sink. Lifecycle start banners go to stderr (console.warn) so
-      // they are visible regardless of whether the consumer is piping
-      // stdout. This is also the channel `no-console` permits without a
-      // per-line suppression.
-      console.warn(`[${ADAPTER_NAME} v${ADAPTER_VERSION}] polling as @${username}`);
+      this.logger.info('polling started', { username });
     }
   }
 }
