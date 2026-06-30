@@ -2,8 +2,8 @@
  * Plugin platform types.
  *
  * Defines the manifest, interface, context, and lifecycle shapes for the
- * Agent OS plugin system. Plugins are registered explicitly — no dynamic
- * loading, no filesystem scanning.
+ * Agent OS plugin system. Supports both explicit registration and dynamic
+ * plugin loading from configurable directories.
  *
  * Layer: 2 (Platform)
  * Dependencies: @agent-os/core, @agent-os/observability, @agent-os/event-bus
@@ -203,4 +203,79 @@ export interface PluginVersionConflict {
 export interface PluginMetadataValidationResult {
   readonly valid: boolean;
   readonly errors: readonly string[];
+}
+
+// ---------------------------------------------------------------------------
+// Plugin Discovery (Phase 7.2)
+// ---------------------------------------------------------------------------
+
+export interface PluginDiscoveryOptions {
+  readonly directories: readonly string[];
+  readonly filePatterns?: readonly string[];
+}
+
+export interface PluginDiscoveryEntry {
+  readonly manifest: PluginManifest;
+  readonly source: string;
+}
+
+export interface PluginDiscoveryResult {
+  readonly entries: readonly PluginDiscoveryEntry[];
+  readonly errors: readonly PluginDiscoveryError[];
+}
+
+export interface PluginDiscoveryError {
+  readonly source: string;
+  readonly error: string;
+}
+
+export interface PluginDiscovery {
+  readonly discover: (options: PluginDiscoveryOptions) => Promise<PluginDiscoveryResult>;
+}
+
+// ---------------------------------------------------------------------------
+// Plugin Loader (Phase 7.2)
+// ---------------------------------------------------------------------------
+
+export interface PluginLoader {
+  readonly load: (
+    manifest: PluginManifest,
+    modulePath: string,
+  ) => Promise<Result<AgentPlugin, string>>;
+}
+
+// ---------------------------------------------------------------------------
+// Plugin Platform (Phase 7.2)
+// ---------------------------------------------------------------------------
+
+export interface PluginPlatformOptions {
+  readonly directories: readonly string[];
+  readonly agentOSVersion: string;
+  readonly logger: Logger;
+  readonly metrics?: MetricRegistry;
+  readonly tracer?: Tracer;
+  readonly eventBus?: EventBus;
+  readonly hermes?: HermesPort;
+  readonly config?: PluginConfiguration;
+}
+
+export interface PluginPlatformLoadResult {
+  readonly loaded: readonly string[];
+  readonly failed: readonly PluginPlatformLoadFailure[];
+}
+
+export interface PluginPlatformLoadFailure {
+  readonly source: string;
+  readonly pluginId: string | undefined;
+  readonly error: string;
+}
+
+export interface PluginPlatform {
+  readonly discover: () => Promise<PluginDiscoveryResult>;
+  readonly loadAll: () => Promise<PluginPlatformLoadResult>;
+  readonly startAll: () => Promise<readonly string[]>;
+  readonly stopAll: () => Promise<readonly string[]>;
+  readonly disposeAll: () => Promise<readonly string[]>;
+  readonly registry: PluginRegistry;
+  readonly lifecycle: PluginLifecycleManager;
 }

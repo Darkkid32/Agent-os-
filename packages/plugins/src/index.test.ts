@@ -11,6 +11,9 @@ import {
   validateAllDependencies,
   validatePluginManifest,
   validateAgentOSCompatibility,
+  createPluginDiscovery,
+  createPluginLoader,
+  createPluginPlatform,
 } from './index.js';
 
 describe('index exports', () => {
@@ -49,5 +52,21 @@ describe('index exports', () => {
     expect(typeof validateAllDependencies).toBe('function');
     expect(typeof validatePluginManifest).toBe('function');
     expect(typeof validateAgentOSCompatibility).toBe('function');
+  });
+
+  it('exports createPluginDiscovery', () => {
+    expect(typeof createPluginDiscovery).toBe('function');
+    const discovery = createPluginDiscovery();
+    expect(typeof discovery.discover).toBe('function');
+  });
+
+  it('exports createPluginLoader', () => {
+    expect(typeof createPluginLoader).toBe('function');
+    const loader = createPluginLoader();
+    expect(typeof loader.load).toBe('function');
+  });
+
+  it('exports createPluginPlatform', () => {
+    expect(typeof createPluginPlatform).toBe('function');
   });
 });
