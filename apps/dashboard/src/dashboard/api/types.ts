@@ -39,10 +39,28 @@ export interface HermesHealthReportDTO {
 
 export interface HermesModuleDTO {
   readonly name: string;
-  readonly version: string;
-  readonly dependencies: readonly string[];
-  readonly required: boolean;
-  readonly healthStatus: HermesModuleHealth;
+  readonly status: HermesModuleHealth;
+  readonly detail?: string;
+}
+
+export interface HermesModulesDTO {
+  readonly count: number;
+  readonly items: readonly HermesModuleDTO[];
+}
+
+export type HermesPluginsDTO = HermesModulesDTO;
+
+export interface MetricEntryDTO {
+  readonly name: string;
+  readonly help: string;
+  readonly type: 'counter' | 'histogram' | 'gauge';
+  readonly labels: Readonly<Record<string, string>>;
+  readonly value: number;
+}
+
+export interface HermesMetricsDTO {
+  readonly count: number;
+  readonly items: readonly MetricEntryDTO[];
 }
 
 export interface HermesConfigDTO {
@@ -77,3 +95,12 @@ export type DashboardEnvelope<T> =
       readonly requestId: string;
       readonly at: string;
     };
+
+export interface DashboardSnapshot {
+  readonly status: DashboardEnvelope<HermesStatusDTO>;
+  readonly health: DashboardEnvelope<HermesHealthReportDTO>;
+  readonly modules: DashboardEnvelope<HermesModulesDTO>;
+  readonly version: DashboardEnvelope<HermesVersionDTO>;
+  readonly plugins: DashboardEnvelope<HermesPluginsDTO>;
+  readonly metrics: DashboardEnvelope<HermesMetricsDTO>;
+}

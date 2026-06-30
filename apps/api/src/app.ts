@@ -52,7 +52,8 @@ export async function buildApp(config: Partial<AppConfig> = {}): Promise<Fastify
   const merged: AppConfig = { ...defaultConfig, ...config };
   const app = Fastify({ logger: merged.logger });
   const requestLogger = createLogger({ defaultAdapter: 'api' });
-  const metrics = createAdapterMetrics(merged.metricRegistry ?? createMetricRegistry(), 'api');
+  const metricRegistry = merged.metricRegistry ?? createMetricRegistry();
+  const metrics = createAdapterMetrics(metricRegistry, 'api');
 
   await app.register(helmet, { contentSecurityPolicy: false });
   await app.register(cors, { origin: [...merged.corsOrigins] });
@@ -109,7 +110,11 @@ export async function buildApp(config: Partial<AppConfig> = {}): Promise<Fastify
   await app.register(versionRoutes, { prefix: '/version' });
 
   if (merged.hermes) {
-    await app.register(hermesRoutes, { prefix: '/v1', hermes: merged.hermes });
+    await app.register(hermesRoutes, {
+      prefix: '/v1',
+      hermes: merged.hermes,
+      metricRegistry,
+    });
   }
 
   return app;

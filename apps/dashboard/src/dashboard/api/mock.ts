@@ -3,6 +3,9 @@ import type {
   DashboardEnvelope,
   HermesConfigDTO,
   HermesHealthReportDTO,
+  HermesMetricsDTO,
+  HermesModulesDTO,
+  HermesPluginsDTO,
   HermesStatusDTO,
   HermesVersionDTO,
 } from './types';
@@ -10,9 +13,11 @@ import type {
 export interface MockSnapshot {
   readonly status: HermesStatusDTO;
   readonly health: HermesHealthReportDTO;
-  readonly modulesCount: number;
+  readonly modules: HermesModulesDTO;
   readonly config: HermesConfigDTO;
   readonly version: HermesVersionDTO;
+  readonly plugins: HermesPluginsDTO;
+  readonly metrics: HermesMetricsDTO;
 }
 
 const mockVersion: HermesVersionDTO = { name: '@agent-os/hermes', version: '1.0.0' };
@@ -32,9 +37,11 @@ const mockConfig: HermesConfigDTO = {
 const defaultSnapshot: MockSnapshot = {
   status: { phase: 'INITIALIZING', uptime: 0, modules: 0 },
   health: { status: 'unknown', modules: [], at: Date.now() },
-  modulesCount: 0,
+  modules: { count: 0, items: [] },
   config: mockConfig,
   version: mockVersion,
+  plugins: { count: 0, items: [] },
+  metrics: { count: 0, items: [] },
 };
 
 const envelope = <T>(data: T): DashboardEnvelope<T> => ({
@@ -63,8 +70,8 @@ export class MockDashboardClient implements DashboardApiClient {
     return envelope(this.snapshot.health);
   }
 
-  public async modules(): Promise<DashboardEnvelope<{ readonly count: number }>> {
-    return envelope({ count: this.snapshot.modulesCount });
+  public async modules(): Promise<DashboardEnvelope<HermesModulesDTO>> {
+    return envelope(this.snapshot.modules);
   }
 
   public async config(): Promise<DashboardEnvelope<HermesConfigDTO>> {
@@ -73,5 +80,13 @@ export class MockDashboardClient implements DashboardApiClient {
 
   public async version(): Promise<DashboardEnvelope<HermesVersionDTO>> {
     return envelope(this.snapshot.version);
+  }
+
+  public async plugins(): Promise<DashboardEnvelope<HermesPluginsDTO>> {
+    return envelope(this.snapshot.plugins);
+  }
+
+  public async metrics(): Promise<DashboardEnvelope<HermesMetricsDTO>> {
+    return envelope(this.snapshot.metrics);
   }
 }

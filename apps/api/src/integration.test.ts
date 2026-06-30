@@ -10,19 +10,29 @@
  */
 import { describe, expect, it } from 'vitest';
 import { createHermes, PACKAGE_NAME, PACKAGE_VERSION, validateConfig } from '@agent-os/hermes';
+import { createMetricRegistry, type MetricRegistry } from '@agent-os/observability';
 import { buildApp } from './app.js';
 import { healthRoutes } from './routes/health.js';
 import { versionRoutes } from './routes/version.js';
 import { hermesRoutes } from './routes/hermes.js';
 
-const seedHermes = () => {
+const seedHermes = (metricRegistry?: MetricRegistry) => {
   const cfg = validateConfig({
     OPENROUTER_API_KEY: 'api-secret',
     DATABASE_URL: 'postgres://api',
     REDIS_URL: 'redis://api',
   });
   if (!cfg.ok) throw new Error('seedHermes: validateConfig failed');
-  return createHermes(cfg.value);
+  return createHermes(cfg.value, metricRegistry ? { metricRegistry } : {});
+};
+
+const seedModule = {
+  name: 'test-plugin',
+  version: '1.2.3',
+  dependencies: [],
+  required: false,
+  healthCheck: () => 'healthy' as const,
+  shutdown: async () => undefined,
 };
 
 describe('apps/api ↔ Hermes integration', () => {
@@ -119,8 +129,73 @@ describe('apps/api ↔ Hermes integration', () => {
     const app = await buildApp({ logger: false, hermes });
     const res = await app.inject({ method: 'GET', url: '/v1/modules' });
     expect(res.statusCode).toBe(200);
-    const body = res.json() as { ok: boolean; value: { count: number } };
+    const body = res.json() as { ok: boolean; value: { count: number; items: unknown[] } };
     expect(body.value.count).toBe(0);
+    expect(body.value.items).toEqual([]);
+    await app.close();
+  });
+
+  it('GET /v1/modules returns serializable live module health details', async () => {
+    const hermes = seedHermes();
+    await hermes.start();
+    const registered = hermes.registerModule(seedModule);
+    expect(registered.ok).toBe(true);
+    const app = await buildApp({ logger: false, hermes });
+    const res = await app.inject({ method: 'GET', url: '/v1/modules' });
+    expect(res.statusCode).toBe(200);
+    const body = res.json() as {
+      ok: boolean;
+      value: { count: number; items: Array<{ name: string; status: string }> };
+    };
+    expect(body.value.count).toBe(1);
+    expect(body.value.items[0]?.name).toBe('test-plugin');
+    expect(body.value.items[0]?.status).toBe('healthy');
+    expect(res.payload).not.toContain('healthCheck');
+    await app.close();
+  });
+
+  it('GET /v1/plugins returns loaded Hermes module/plugin inventory', async () => {
+    const hermes = seedHermes();
+    await hermes.start();
+    const registered = hermes.registerModule(seedModule);
+    expect(registered.ok).toBe(true);
+    const app = await buildApp({ logger: false, hermes });
+    const res = await app.inject({ method: 'GET', url: '/v1/plugins' });
+    expect(res.statusCode).toBe(200);
+    const body = res.json() as {
+      ok: boolean;
+      value: { count: number; items: Array<{ name: string; status: string }> };
+    };
+    expect(body.ok).toBe(true);
+    expect(body.value.count).toBe(1);
+    expect(body.value.items[0]?.name).toBe('test-plugin');
+    expect(body.value.items[0]?.status).toBe('healthy');
+    await app.close();
+  });
+
+  it('GET /v1/metrics returns the shared metric registry snapshot', async () => {
+    const metricRegistry = createMetricRegistry();
+    const hermes = seedHermes(metricRegistry);
+    const app = await buildApp({ logger: false, hermes, metricRegistry });
+    await app.inject({ method: 'GET', url: '/v1/status' });
+    const res = await app.inject({ method: 'GET', url: '/v1/metrics' });
+    expect(res.statusCode).toBe(200);
+    const body = res.json() as {
+      ok: boolean;
+      value: { count: number; items: Array<{ name: string; labels: { adapter?: string } }> };
+    };
+    expect(body.ok).toBe(true);
+    expect(body.value.count).toBeGreaterThan(0);
+    expect(
+      body.value.items.some(
+        (metric) => metric.name === 'requests_total' && metric.labels.adapter === 'api',
+      ),
+    ).toBe(true);
+    expect(
+      body.value.items.some(
+        (metric) => metric.name === 'loaded_modules' && metric.labels.adapter === 'hermes',
+      ),
+    ).toBe(true);
     await app.close();
   });
 

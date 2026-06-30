@@ -26,9 +26,22 @@ import {
   mapKernelErrorToAdapterError,
 } from '@agent-os/core/adapter-errors';
 import { type HermesConfig, type HermesPort, redactHermesConfig } from '@agent-os/hermes';
+import type { MetricEntry, MetricRegistry } from '@agent-os/observability';
 
 export interface HermesRoutesOpts {
   readonly hermes: HermesPort;
+  readonly metricRegistry?: MetricRegistry;
+}
+
+interface HermesModuleDTO {
+  readonly name: string;
+  readonly status: string;
+  readonly detail?: string;
+}
+
+interface MetricsDTO {
+  readonly count: number;
+  readonly items: readonly MetricEntry[];
 }
 
 const configToJson = (cfg: HermesConfig): Record<string, unknown> => ({
@@ -41,6 +54,27 @@ const configToJson = (cfg: HermesConfig): Record<string, unknown> => ({
   otelExporterEndpoint: cfg.otelExporterEndpoint ?? null,
   hermesModulesDir: cfg.hermesModulesDir,
   hermesShutdownTimeoutMs: cfg.hermesShutdownTimeoutMs,
+});
+
+const moduleToJson = (module: {
+  readonly name: string;
+  readonly status: string;
+  readonly detail?: string;
+}): HermesModuleDTO => ({
+  name: module.name,
+  status: module.status,
+  ...(module.detail ? { detail: module.detail } : {}),
+});
+
+const metricsToJson = (metrics: readonly MetricEntry[]): MetricsDTO => ({
+  count: metrics.length,
+  items: metrics.map((metric) => ({
+    name: metric.name,
+    help: metric.help,
+    type: metric.type,
+    labels: { ...metric.labels },
+    value: metric.value,
+  })),
 });
 
 /**
@@ -61,7 +95,7 @@ export const hermesRoutes: FastifyPluginAsync<HermesRoutesOpts> = async (
   app: FastifyInstance,
   opts: HermesRoutesOpts,
 ): Promise<void> => {
-  const { hermes } = opts;
+  const { hermes, metricRegistry } = opts;
 
   app.get('/status', async () => ({
     ok: true,
@@ -89,9 +123,30 @@ export const hermesRoutes: FastifyPluginAsync<HermesRoutesOpts> = async (
     return errorReply(reply, r.error);
   });
 
-  app.get('/modules', async () => ({
+  app.get('/modules', async () => {
+    const status = hermes.status();
+    const health = await hermes.health();
+    return {
+      ok: true,
+      value: {
+        count: status.modules,
+        items: health.modules.map(moduleToJson),
+      },
+    };
+  });
+
+  app.get('/plugins', async () => {
+    const health = await hermes.health();
+    const modules = health.modules.map(moduleToJson);
+    return {
+      ok: true,
+      value: { count: modules.length, items: modules },
+    };
+  });
+
+  app.get('/metrics', async () => ({
     ok: true,
-    value: { count: hermes.status().modules },
+    value: metricsToJson(metricRegistry?.getMetrics() ?? []),
   }));
 
   app.get('/config', async () => {

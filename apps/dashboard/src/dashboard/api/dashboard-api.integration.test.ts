@@ -67,9 +67,9 @@ describe('FetchDashboardClient', () => {
       const url = typeof input === 'string' ? input : input.toString();
       captured.url = url;
       captured.method = 'GET';
-      const body: DashboardEnvelope<HermesStatusDTO> = {
+      const body = {
         ok: true,
-        data: { phase: 'RUNNING', uptime: 9999, modules: 7 },
+        value: { phase: 'RUNNING', uptime: 9999, modules: 7 },
         requestId: 'test-req',
         at: new Date().toISOString(),
       };
@@ -141,6 +141,29 @@ describe('FetchDashboardClient', () => {
     const client = new FetchDashboardClient('/v1');
     await client.version();
     expect(seenHeaders['x-request-id']).toBeDefined();
+  });
+
+  it('calls plugins and metrics endpoints', async () => {
+    const seen: string[] = [];
+    /* eslint-disable @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-return */
+    globalThis.fetch = vi.fn(async (input: RequestInfo | URL): Promise<Response> => {
+      const url = typeof input === 'string' ? input : input.toString();
+      seen.push(url);
+      const body = url.endsWith('/plugins')
+        ? { ok: true, value: { count: 0, items: [] }, requestId: 'r', at: new Date().toISOString() }
+        : {
+            ok: true,
+            value: { count: 0, items: [] },
+            requestId: 'r',
+            at: new Date().toISOString(),
+          };
+      return new Response(JSON.stringify(body), { status: 200 });
+    }) as typeof fetch;
+    /* eslint-enable @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-return */
+    const client = new FetchDashboardClient('/v1');
+    await client.plugins();
+    await client.metrics();
+    expect(seen).toEqual(['/v1/plugins', '/v1/metrics']);
   });
 
   it('default baseUrl is /v1', async () => {
