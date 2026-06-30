@@ -1,0 +1,59 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+build/
+.next/
+.turbo/
+out/
+coverage/
+*.tsbuildinfo
+
+# Generated declaration files
+packages/*/src/**/*.d.ts
+packages/*/src/**/*.d.ts.map
+packages/*/src/**/*.js
+packages/*/src/**/*.js.map
+
+# Environment and secrets
+.env
+.env.local
+.env.*.local
+docker/.env
+
+# Version control
+.git/
+.gitignore
+.husky/
+
+# Editor and IDE
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# CI/CD
+.github/
+
+# Testing
+.nyc_output/
+
+# Cache
+.cache/
+.eslintcache
+.parcel-cache
+
+# Documentation (not needed in containers)
+docs/
+*.md
+!packages/*/README.md
+
+# Docker (avoid recursive builds)
+docker/
+
+# Package artifacts
+*.tgz
+*.tar.gz

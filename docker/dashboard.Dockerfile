@@ -31,11 +31,19 @@ COPY packages/workflow/package.json ./packages/workflow/
 COPY packages/agents/package.json   ./packages/agents/
 COPY packages/memory/package.json   ./packages/memory/
 COPY packages/event-bus/package.json ./packages/event-bus/
-COPY packages/adapters/package.json ./packages/adapters/
-COPY packages/adapters-sdk/package.json ./packages/adapters-sdk/
 COPY packages/observability/package.json ./packages/observability/
 COPY packages/ui/package.json       ./packages/ui/
 COPY packages/hermes/package.json   ./packages/hermes/
+COPY packages/plugins/package.json  ./packages/plugins/
+COPY packages/plugin-sdk/package.json ./packages/plugin-sdk/
+COPY packages/agents/package.json   ./packages/agents/
+COPY packages/adapters-cli/package.json ./packages/adapters-cli/
+COPY packages/adapters-discord/package.json ./packages/adapters-discord/
+COPY packages/adapters-telegram/package.json ./packages/adapters-telegram/
+COPY packages/adapters-webhook/package.json ./packages/adapters-webhook/
+COPY packages/adapters-mcp/package.json ./packages/adapters-mcp/
+COPY packages/adapters-whatsapp/package.json ./packages/adapters-whatsapp/
+COPY packages/adapters-email/package.json ./packages/adapters-email/
 
 RUN --mount=type=cache,id=pnpm-dashboard,target=/pnpm/store pnpm fetch
 RUN --mount=type=cache,id=pnpm-dashboard,target=/pnpm/store pnpm install --frozen-lockfile --filter @agent-os/dashboard...

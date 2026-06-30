@@ -31,11 +31,19 @@ COPY packages/workflow/package.json ./packages/workflow/
 COPY packages/agents/package.json   ./packages/agents/
 COPY packages/memory/package.json   ./packages/memory/
 COPY packages/event-bus/package.json ./packages/event-bus/
-COPY packages/adapters/package.json ./packages/adapters/
-COPY packages/adapters-sdk/package.json ./packages/adapters-sdk/
 COPY packages/observability/package.json ./packages/observability/
 COPY packages/ui/package.json       ./packages/ui/
 COPY packages/hermes/package.json   ./packages/hermes/
+COPY packages/plugins/package.json  ./packages/plugins/
+COPY packages/plugin-sdk/package.json ./packages/plugin-sdk/
+COPY packages/agents/package.json   ./packages/agents/
+COPY packages/adapters-cli/package.json ./packages/adapters-cli/
+COPY packages/adapters-discord/package.json ./packages/adapters-discord/
+COPY packages/adapters-telegram/package.json ./packages/adapters-telegram/
+COPY packages/adapters-webhook/package.json ./packages/adapters-webhook/
+COPY packages/adapters-mcp/package.json ./packages/adapters-mcp/
+COPY packages/adapters-whatsapp/package.json ./packages/adapters-whatsapp/
+COPY packages/adapters-email/package.json ./packages/adapters-email/
 
 RUN --mount=type=cache,id=pnpm-api,target=/pnpm/store pnpm fetch
 RUN --mount=type=cache,id=pnpm-api,target=/pnpm/store pnpm install --frozen-lockfile --filter @agent-os/api...
@@ -56,7 +64,7 @@ CMD ["pnpm", "--filter", "@agent-os/api", "run", "dev"]
 FROM deps AS builder
 WORKDIR /repo
 COPY . .
-RUN pnpm --filter @agent-os/core --filter @agent-os/shared --filter @agent-os/observability --filter @agent-os/runtime --filter @agent-os/agents --filter @agent-os/workflow --filter @agent-os/memory --filter @agent-os/event-bus --filter @agent-os/adapters-sdk --filter @agent-os/adapters --filter @agent-os/ui --filter @agent-os/hermes run build
+RUN pnpm --filter @agent-os/core --filter @agent-os/shared --filter @agent-os/observability --filter @agent-os/runtime --filter @agent-os/agents --filter @agent-os/workflow --filter @agent-os/memory --filter @agent-os/event-bus --filter @agent-os/hermes run build
 RUN pnpm --filter @agent-os/api run build
 
 # ---------- Production ----------
@@ -78,6 +86,12 @@ COPY --from=builder /repo/packages/shared/dist            ./node_modules/@agent-
 COPY --from=builder /repo/packages/shared/package.json    ./node_modules/@agent-os/shared/
 COPY --from=builder /repo/packages/observability/dist     ./node_modules/@agent-os/observability/dist
 COPY --from=builder /repo/packages/observability/package.json ./node_modules/@agent-os/observability/
+COPY --from=builder /repo/packages/hermes/dist            ./node_modules/@agent-os/hermes/dist
+COPY --from=builder /repo/packages/hermes/package.json    ./node_modules/@agent-os/hermes/
+COPY --from=builder /repo/packages/runtime/dist           ./node_modules/@agent-os/runtime/dist
+COPY --from=builder /repo/packages/runtime/package.json   ./node_modules/@agent-os/runtime/
+COPY --from=builder /repo/packages/agents/dist            ./node_modules/@agent-os/agents/dist
+COPY --from=builder /repo/packages/agents/package.json    ./node_modules/@agent-os/agents/
 
 EXPOSE 4000
 USER node

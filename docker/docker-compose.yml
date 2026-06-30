@@ -17,8 +17,6 @@
 name: agent-os
 
 x-pnpm-common: &pnpm-common
-  env_file:
-    - .env
   restart: unless-stopped
   networks:
     - agent-os-net
@@ -39,6 +37,7 @@ services:
       DATABASE_URL: ${DATABASE_URL:-postgres://agent_os:agent_os@postgres:5432/agent_os}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      SHUTDOWN_TIMEOUT_MS: ${SHUTDOWN_TIMEOUT_MS:-30000}
     ports:
       - "4000:4000"
     depends_on:
@@ -46,6 +45,13 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:4000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    stop_grace_period: 35s
 
   dashboard:
     <<: *pnpm-common
@@ -62,6 +68,12 @@ services:
       - "3000:3000"
     depends_on:
       - api
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
 
   postgres:
     <<: *pnpm-common
