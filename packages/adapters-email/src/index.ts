@@ -11,7 +11,7 @@ export {
   WEBHOOK_PATH,
   SUPPORTED_OPERATIONS,
 } from './EmailAdapter.js';
-export { PACKAGE_NAME, PACKAGE_VERSION } from '@agent-os/hermes';
+export { PACKAGE_NAME, PACKAGE_VERSION } from './constants.js';
 export type {
   CommandError,
   EmailAdapterHealth,

@@ -5,6 +5,9 @@
 | `dependency-graph.mmd`          | Layered workspace dependency graph (and the rules it encodes).   |
 | `request-flow.mmd`              | Sequence diagram: dashboard to API to runtime to LLM/memory.     |
 | `deployment.mmd`                | External view: containers, databases, telemetry, LLM provider.   |
+| `hermes-lifecycle.mmd`          | Hermes lifecycle state machine diagram.                          |
+| `hermes-kernel-evolution.mmd`   | Hermes kernel evolution diagram.                                 |
+| `hermes-components.mmd`         | Hermes component diagram.                                        |
 
 Render with any Mermaid-compatible viewer. GitHub renders these natively in
 markdown. To export:

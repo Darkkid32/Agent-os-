@@ -1,9 +1,9 @@
 /**
- * /version — reads PACKAGE_NAME and PACKAGE_VERSION from Hermes.
+ * /version — reads PACKAGE_NAME and PACKAGE_VERSION from this package.
  *
  * Read-only command. Requires viewer role.
  */
-import { PACKAGE_NAME, PACKAGE_VERSION } from '@agent-os/hermes';
+import { PACKAGE_NAME, PACKAGE_VERSION } from '../constants.js';
 import type { TelegramCommand } from '../types.js';
 import { formatVersionMessage } from '../formats.js';
 

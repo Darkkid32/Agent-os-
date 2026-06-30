@@ -12,9 +12,9 @@ package in a higher-numbered layer.
 | Layer | Packages |
 | ----- | -------- |
 | 1 — Foundation | `core`, `shared` |
-| 2 — Platform | `event-bus`, `memory`, `runtime`, `workflow`, `observability`, `config` |
-| 3 — Domain | `agents`, `adapters-sdk`, `adapters`, `ui` |
-| 4 — Surfaces | `hermes` |
+| 2 — Platform | `event-bus`, `memory`, `runtime`, `workflow`, `observability`, `config`, `auth`, `plugins` |
+| 3 — Domain | `agents`, `plugin-sdk`, `adapters`, `ui` |
+| 4 — Surfaces | `hermes`, `benchmarks` |
 
 In addition:
 
@@ -31,10 +31,9 @@ In addition:
   `observability`, and `event-bus` for the eventual integration — but never
   on `adapters`, `memory`, or `agents` directly.
 
-- `adapters` and `adapters-sdk` must be peers. `adapters` is the only
-  package allowed to depend on concrete third-party SDKs (HTTP clients,
-  vector stores, etc.). `adapters-sdk` exports the contract third parties
-  implement.
+- `adapters` are the only packages allowed to depend on concrete third-party
+  SDKs (HTTP clients, vector stores, etc.). `plugin-sdk` exports the contract
+  third parties implement.
 
 - `ui` and `apps/dashboard` are the only nodes allowed to depend on React.
   Every other package is headless.

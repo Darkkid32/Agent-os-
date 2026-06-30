@@ -119,14 +119,15 @@ describe('Hermes ↔ Email integration', () => {
     }
   });
 
-  it('version handler reads PACKAGE_NAME/PACKAGE_VERSION from @agent-os/hermes', async () => {
+  it('version handler reads PACKAGE_NAME/PACKAGE_VERSION from this package', async () => {
     const hermes = seedHermes();
     const result = await versionCommand.handler(ctx(hermes, 'admin@example.com'), { options: {} });
     expect(result.ok).toBe(true);
     if (result.ok) {
       const text = result.value.text;
       expect(text).toContain('agent');
-      expect(text).toContain('/hermes');
+      expect(text).toContain('adapters');
+      expect(text).toContain('email');
     }
   });
 

@@ -10,10 +10,11 @@ export {
   ADAPTER_VERSION,
   SUPPORTED_OPERATIONS,
 } from './TelegramAdapter.js';
-export { PACKAGE_NAME, PACKAGE_VERSION } from '@agent-os/hermes';
+export { PACKAGE_NAME, PACKAGE_VERSION } from './constants.js';
 export type {
   CommandError,
   TelegramAdapterHealth,
+  TelegramAdapterHealthStatus,
   TelegramCommand,
   TelegramCommandArgs,
   TelegramContext,

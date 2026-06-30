@@ -88,14 +88,15 @@ describe('Hermes ↔ WhatsApp integration', () => {
     }
   });
 
-  it('version handler reads PACKAGE_NAME/PACKAGE_VERSION from @agent-os/hermes', async () => {
+  it('version handler reads PACKAGE_NAME/PACKAGE_VERSION from this package', async () => {
     const hermes = seedHermes();
     const result = await versionCommand.handler(ctx(hermes, '+1234567890'), { options: {} });
     expect(result.ok).toBe(true);
     if (result.ok) {
       const text = result.value.text;
       expect(text).toContain('agent');
-      expect(text).toContain('/hermes');
+      expect(text).toContain('adapters');
+      expect(text).toContain('whatsapp');
       expect(text).toMatch(/Hermes Version/);
     }
   });

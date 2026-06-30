@@ -4,7 +4,7 @@
  * Read-only command. Requires viewer role. No Hermes call required —
  * versions are static constants.
  */
-import { PACKAGE_NAME, PACKAGE_VERSION } from '@agent-os/hermes';
+import { PACKAGE_NAME, PACKAGE_VERSION } from '../constants.js';
 import type { WhatsAppCommand } from '../types.js';
 import { formatVersionMessage } from '../formats.js';
 

@@ -91,7 +91,7 @@ describe('Hermes ↔ Telegram integration', () => {
     }
   });
 
-  it('version handler reads PACKAGE_NAME/PACKAGE_VERSION from @agent-os/hermes', async () => {
+  it('version handler reads PACKAGE_NAME/PACKAGE_VERSION from this package', async () => {
     const hermes = seedHermes();
     const result = await versionCommand.handler(ctx(hermes, 'tg-admin'), { options: {} });
     expect(result.ok).toBe(true);
@@ -99,7 +99,8 @@ describe('Hermes ↔ Telegram integration', () => {
       const text = result.value.text;
       // MarkdownV2 escapes the hyphen; verify the formatted envelope.
       expect(text).toContain('agent');
-      expect(text).toContain('/hermes');
+      expect(text).toContain('adapters');
+      expect(text).toContain('telegram');
       expect(text).toMatch(/Hermes Version/);
     }
   });

@@ -54,7 +54,7 @@ Docker images are pushed to GitHub Container Registry:
 
 ```
 ghcr.io/agent-os/api:<version>
-ghcr.io/api/dashboard:<version>
+ghcr.io/agent-os/dashboard:<version>
 ```
 
 Tags:
