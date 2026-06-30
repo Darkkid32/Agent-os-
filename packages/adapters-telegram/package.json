@@ -1,6 +1,6 @@
 {
   "name": "@agent-os/adapters-telegram",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "description": "Telegram adapter for the Hermes kernel. Phase 3.5.",
   "type": "module",

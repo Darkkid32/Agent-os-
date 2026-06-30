@@ -1,6 +1,6 @@
 {
   "name": "@agent-os/workflow",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "description": "Workflow definitions and DAG contracts. Logic in later phases.",
   "type": "module",

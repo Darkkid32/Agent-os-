@@ -35,7 +35,7 @@ for (const count of PLUGIN_COUNTS) {
     bench('createPluginPlatform', () => {
       createPluginPlatform({
         directories: [],
-        agentOSVersion: '0.1.0',
+        agentOSVersion: '1.0.0',
         logger,
       });
     });
@@ -43,7 +43,7 @@ for (const count of PLUGIN_COUNTS) {
     bench('registry.register + lookup', () => {
       const platform = createPluginPlatform({
         directories: [],
-        agentOSVersion: '0.1.0',
+        agentOSVersion: '1.0.0',
         logger,
       });
       for (let i = 0; i < count; i++) {
@@ -57,7 +57,7 @@ for (const count of PLUGIN_COUNTS) {
     bench('lifecycle.initializeAll', async () => {
       const platform = createPluginPlatform({
         directories: [],
-        agentOSVersion: '0.1.0',
+        agentOSVersion: '1.0.0',
         logger,
       });
       for (let i = 0; i < Math.min(count, 10); i++) {

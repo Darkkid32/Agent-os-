@@ -62,7 +62,7 @@ export const healthRoutes: FastifyPluginAsync<HealthRouteOptions> = async (
       return diag.report();
     }
     return {
-      version: '0.1.0',
+      version: '1.0.0',
       uptimeMs: Math.round(process.uptime() * 1000),
       buildInfo: {
         version: process.version,

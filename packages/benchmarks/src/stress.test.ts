@@ -157,7 +157,7 @@ describe('Stress: Concurrent Plugin Operations', () => {
   it('concurrent registry.register() does not crash', () => {
     const platform = createPluginPlatform({
       directories: [],
-      agentOSVersion: '0.1.0',
+      agentOSVersion: '1.0.0',
       logger,
     });
 
@@ -170,7 +170,7 @@ describe('Stress: Concurrent Plugin Operations', () => {
   it('concurrent registry.get() does not crash', () => {
     const platform = createPluginPlatform({
       directories: [],
-      agentOSVersion: '0.1.0',
+      agentOSVersion: '1.0.0',
       logger,
     });
 

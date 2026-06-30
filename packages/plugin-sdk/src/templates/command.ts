@@ -56,7 +56,7 @@ export const createCommandPlugin = (options: CommandPluginOptions): AgentPlugin 
       description,
       capabilities: commands.map((cmd) => `command:${cmd.name}`),
       dependencies: [],
-      minimumAgentOSVersion: '0.1.0',
+      minimumAgentOSVersion: '1.0.0',
     },
 
     initialize: async (context: PluginContext): Promise<Result<void>> => {

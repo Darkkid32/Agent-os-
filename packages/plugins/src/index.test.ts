@@ -24,7 +24,7 @@ import {
 describe('index exports', () => {
   it('exports PACKAGE_NAME and PACKAGE_VERSION', () => {
     expect(PACKAGE_NAME).toBe('@agent-os/plugins');
-    expect(PACKAGE_VERSION).toBe('0.1.0');
+    expect(PACKAGE_VERSION).toBe('1.0.0');
   });
 
   it('exports PLUGIN_TERMINAL_PHASES', () => {

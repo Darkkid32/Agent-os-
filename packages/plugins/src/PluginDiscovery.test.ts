@@ -35,7 +35,7 @@ describe('PluginDiscovery', () => {
           plugin: {
             id: 'plugin-a',
             capabilities: ['test'],
-            minimumAgentOSVersion: '0.1.0',
+            minimumAgentOSVersion: '1.0.0',
           },
         },
       }),
@@ -127,7 +127,7 @@ describe('PluginDiscovery', () => {
             plugin: {
               id: 'plugin-1',
               capabilities: ['test'],
-              minimumAgentOSVersion: '0.1.0',
+              minimumAgentOSVersion: '1.0.0',
             },
           },
         }),
@@ -142,7 +142,7 @@ describe('PluginDiscovery', () => {
             plugin: {
               id: 'plugin-2',
               capabilities: ['test'],
-              minimumAgentOSVersion: '0.1.0',
+              minimumAgentOSVersion: '1.0.0',
             },
           },
         }),
@@ -173,7 +173,7 @@ describe('PluginDiscovery', () => {
           plugin: {
             id: 'plugin-ok',
             capabilities: ['test'],
-            minimumAgentOSVersion: '0.1.0',
+            minimumAgentOSVersion: '1.0.0',
           },
         },
       }),

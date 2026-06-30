@@ -39,7 +39,7 @@ export const createHelloWorldPlugin = (options: HelloWorldPluginOptions = {}): A
       description: 'A simple hello world plugin demonstrating basic plugin structure',
       capabilities: ['greeting'],
       dependencies: [],
-      minimumAgentOSVersion: '0.1.0',
+      minimumAgentOSVersion: '1.0.0',
       configSchema: {
         greeting: {
           type: 'string',

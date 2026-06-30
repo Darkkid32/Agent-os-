@@ -55,7 +55,7 @@ import {
 } from './formats.js';
 
 export const ADAPTER_NAME = '@agent-os/adapters-webhook';
-export const ADAPTER_VERSION = '0.1.0';
+export const ADAPTER_VERSION = '1.0.0';
 
 const DEFAULT_MAX_BODY_BYTES = 1_048_576;
 const DEFAULT_TIMEOUT_MS = 10_000;

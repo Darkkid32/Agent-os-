@@ -86,7 +86,7 @@ export const createDiagnostics = (
   return {
     report(): DiagnosticsReport {
       return {
-        version: '0.1.0',
+        version: '1.0.0',
         uptimeMs: Date.now() - startedAt,
         buildInfo: getBuildInfo(),
         loadedPlugins: plugins,

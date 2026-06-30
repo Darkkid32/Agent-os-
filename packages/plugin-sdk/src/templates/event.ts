@@ -56,7 +56,7 @@ export const createEventPlugin = (options: EventPluginOptions): AgentPlugin => {
       description,
       capabilities: handlers.map((h) => `event:${h.event}`),
       dependencies: [],
-      minimumAgentOSVersion: '0.1.0',
+      minimumAgentOSVersion: '1.0.0',
     },
 
     initialize: async (context: PluginContext): Promise<Result<void>> => {

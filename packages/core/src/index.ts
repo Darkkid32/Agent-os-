@@ -9,7 +9,7 @@
  */
 
 export const PACKAGE_NAME = '@agent-os/core' as const;
-export const PACKAGE_VERSION = '0.1.0' as const;
+export const PACKAGE_VERSION = '1.0.0' as const;
 
 export type Result<T, E = Error> =
   { readonly ok: true; readonly value: T } | { readonly ok: false; readonly error: E };

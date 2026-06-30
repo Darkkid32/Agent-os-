@@ -18,7 +18,7 @@ describe('createPluginManifest', () => {
     expect(manifest.description).toBe('A test plugin');
     expect(manifest.capabilities).toEqual([]);
     expect(manifest.dependencies).toEqual([]);
-    expect(manifest.minimumAgentOSVersion).toBe('0.1.0');
+    expect(manifest.minimumAgentOSVersion).toBe('1.0.0');
   });
 
   it('creates a manifest with optional fields', () => {

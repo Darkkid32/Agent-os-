@@ -8,7 +8,7 @@
 import { z } from 'zod';
 
 export const PACKAGE_NAME = '@agent-os/shared' as const;
-export const PACKAGE_VERSION = '0.1.0' as const;
+export const PACKAGE_VERSION = '1.0.0' as const;
 
 export const HealthStatusSchema = z.object({
   status: z.literal('ok'),

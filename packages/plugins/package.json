@@ -1,6 +1,6 @@
 {
   "name": "@agent-os/plugins",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "description": "Plugin platform foundation for Agent OS — manifest, registry, lifecycle, and dependency validation.",
   "type": "module",

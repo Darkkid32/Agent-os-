@@ -11,7 +11,7 @@ const createTestManifest = (overrides: Partial<PluginManifest> = {}): PluginMani
   description: 'A test plugin',
   capabilities: ['test'],
   dependencies: [],
-  minimumAgentOSVersion: '0.1.0',
+  minimumAgentOSVersion: '1.0.0',
   ...overrides,
 });
 

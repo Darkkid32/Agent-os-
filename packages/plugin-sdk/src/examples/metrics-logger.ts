@@ -32,7 +32,7 @@ export const createMetricsLoggerPlugin = (
       description: 'Collects and logs system metrics at regular intervals',
       capabilities: ['metrics', 'monitoring'],
       dependencies: [],
-      minimumAgentOSVersion: '0.1.0',
+      minimumAgentOSVersion: '1.0.0',
       configSchema: {
         intervalMs: {
           type: 'number',

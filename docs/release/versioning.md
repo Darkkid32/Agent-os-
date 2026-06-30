@@ -18,7 +18,7 @@ MAJOR.MINOR.PATCH[-PRERELEASE][+BUILD]
 
 ### Current State
 
-All packages are at version `0.1.0` and are private (not published to npm).
+All packages are at version `1.0.0` and are private (not published to npm).
 
 ### When to Bump Versions
 

@@ -1,6 +1,6 @@
 {
   "name": "@agent-os/hermes",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "description": "Hermes integration layer placeholder. Implementation ships in Phase 2.",
   "type": "module",

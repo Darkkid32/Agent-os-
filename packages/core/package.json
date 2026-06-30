@@ -1,6 +1,6 @@
 {
   "name": "@agent-os/core",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "description": "Core primitives, types, and utilities for the Agent OS runtime and platform.",
   "type": "module",

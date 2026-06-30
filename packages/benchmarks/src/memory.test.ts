@@ -78,7 +78,7 @@ describe('Memory Profiling', () => {
     const heapBefore = measureHeapMb();
     createPluginPlatform({
       directories: [],
-      agentOSVersion: '0.1.0',
+      agentOSVersion: '1.0.0',
       logger,
     });
     const heapAfter = measureHeapMb();
@@ -91,7 +91,7 @@ describe('Memory Profiling', () => {
     const platforms = Array.from({ length: 10 }, () =>
       createPluginPlatform({
         directories: [],
-        agentOSVersion: '0.1.0',
+        agentOSVersion: '1.0.0',
         logger,
       }),
     );

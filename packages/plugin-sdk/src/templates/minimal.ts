@@ -26,7 +26,7 @@ export const createMinimalPlugin = (options: MinimalPluginOptions): AgentPlugin 
       description,
       capabilities: [],
       dependencies: [],
-      minimumAgentOSVersion: '0.1.0',
+      minimumAgentOSVersion: '1.0.0',
     },
 
     initialize: async (context: PluginContext): Promise<Result<void>> => {

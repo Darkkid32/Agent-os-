@@ -32,7 +32,7 @@ describe('adapter-metadata', () => {
     it('accepts the canonical four-field shape', () => {
       const cli: AdapterMetadata = {
         name: '@agent-os/adapters-cli',
-        version: '0.1.0',
+        version: '1.0.0',
         interfaceType: 'cli',
         supportedOperations: ['start', 'stop', 'status', 'health', 'plugins', 'config', 'version'],
       };

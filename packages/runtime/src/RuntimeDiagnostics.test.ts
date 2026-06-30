@@ -5,7 +5,7 @@ describe('RuntimeDiagnostics', () => {
   it('returns default report', () => {
     const diag = createDiagnostics({});
     const report = diag.report();
-    expect(report.version).toBe('0.1.0');
+    expect(report.version).toBe('1.0.0');
     expect(report.uptimeMs).toBeGreaterThanOrEqual(0);
     expect(report.buildInfo.nodeVersion).toBe(process.version);
     expect(report.buildInfo.platform).toBe(process.platform);

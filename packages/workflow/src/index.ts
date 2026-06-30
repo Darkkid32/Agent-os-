@@ -7,7 +7,7 @@
 import type { Identifier } from '@agent-os/core';
 
 export const PACKAGE_NAME = '@agent-os/workflow' as const;
-export const PACKAGE_VERSION = '0.1.0' as const;
+export const PACKAGE_VERSION = '1.0.0' as const;
 
 export type WorkflowId = Identifier<'WorkflowId'>;
 export type WorkflowStepId = Identifier<'WorkflowStepId'>;

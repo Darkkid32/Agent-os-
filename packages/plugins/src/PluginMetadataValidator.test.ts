@@ -10,7 +10,7 @@ const createValidManifest = (overrides: Partial<PluginManifest> = {}): PluginMan
   description: 'A test plugin',
   capabilities: ['test'],
   dependencies: [],
-  minimumAgentOSVersion: '0.1.0',
+  minimumAgentOSVersion: '1.0.0',
   ...overrides,
 });
 
@@ -116,14 +116,14 @@ describe('validatePluginManifest', () => {
 
 describe('validateAgentOSCompatibility', () => {
   it('passes when current version meets requirement', () => {
-    const manifest = createValidManifest({ minimumAgentOSVersion: '0.1.0' });
-    const result = validateAgentOSCompatibility(manifest, '0.1.0');
+    const manifest = createValidManifest({ minimumAgentOSVersion: '0.5.0' });
+    const result = validateAgentOSCompatibility(manifest, '1.0.0');
 
     expect(result.valid).toBe(true);
   });
 
   it('passes when current version exceeds requirement', () => {
-    const manifest = createValidManifest({ minimumAgentOSVersion: '0.1.0' });
+    const manifest = createValidManifest({ minimumAgentOSVersion: '0.5.0' });
     const result = validateAgentOSCompatibility(manifest, '1.0.0');
 
     expect(result.valid).toBe(true);
@@ -138,7 +138,7 @@ describe('validateAgentOSCompatibility', () => {
   });
 
   it('handles invalid version strings', () => {
-    const manifest = createValidManifest({ minimumAgentOSVersion: '0.1.0' });
+    const manifest = createValidManifest({ minimumAgentOSVersion: '1.0.0' });
     const result = validateAgentOSCompatibility(manifest, 'invalid');
 
     expect(result.valid).toBe(false);

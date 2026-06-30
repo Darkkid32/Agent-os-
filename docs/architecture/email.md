@@ -274,7 +274,7 @@ The package `@agent-os/adapters-email` exports:
 | `EmailAdapterHealthStatus` | type | Alias of `AdapterHealthStatus` from `@agent-os/core/adapter-metadata` |
 | `EmailAdapterMode` | type | `'imap-polling' \| 'ses-webhook'` |
 | `ADAPTER_NAME` | const | `'@agent-os/adapters-email'` |
-| `ADAPTER_VERSION` | const | `'0.1.0'` |
+| `ADAPTER_VERSION` | const | `'1.0.0'` |
 
 ### 5.2 HermesPort
 

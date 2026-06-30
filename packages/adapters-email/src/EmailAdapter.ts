@@ -62,7 +62,7 @@ import { versionCommand } from './commands/VersionCommand.js';
 import { helpCommand } from './commands/HelpCommand.js';
 
 export const ADAPTER_NAME = '@agent-os/adapters-email';
-export const ADAPTER_VERSION = '0.1.0';
+export const ADAPTER_VERSION = '1.0.0';
 export const WEBHOOK_PATH = '/v1/adapters/email/webhook';
 export const SUPPORTED_OPERATIONS: readonly string[] = [
   'start',

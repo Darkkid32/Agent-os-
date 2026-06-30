@@ -130,7 +130,7 @@ describe('FetchDashboardClient', () => {
         });
         const body: DashboardEnvelope<HermesVersionDTO> = {
           ok: true,
-          data: { name: '@agent-os/hermes', version: '0.1.0' },
+          data: { name: '@agent-os/hermes', version: '1.0.0' },
           requestId: 'rid',
           at: new Date().toISOString(),
         };

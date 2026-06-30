@@ -18,7 +18,7 @@ describe('minimal template', () => {
     expect(plugin.manifest.description).toBe('Test plugin');
     expect(plugin.manifest.capabilities).toEqual([]);
     expect(plugin.manifest.dependencies).toEqual([]);
-    expect(plugin.manifest.minimumAgentOSVersion).toBe('0.1.0');
+    expect(plugin.manifest.minimumAgentOSVersion).toBe('1.0.0');
   });
 
   it('calls onInitialize when initialize is called', async () => {

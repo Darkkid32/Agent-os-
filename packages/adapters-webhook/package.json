@@ -1,6 +1,6 @@
 {
   "name": "@agent-os/adapters-webhook",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "description": "Generic, vendor-neutral HTTP webhook surface adapter for the Hermes kernel. Phase 3.6.",
   "type": "module",

@@ -1,6 +1,6 @@
 {
   "name": "@agent-os/benchmarks",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "description": "Agent OS performance benchmarks and stress tests.",
   "type": "module",

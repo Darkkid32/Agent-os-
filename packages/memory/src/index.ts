@@ -7,7 +7,7 @@
 import type { Identifier, Result, Timestamp } from '@agent-os/core';
 
 export const PACKAGE_NAME = '@agent-os/memory' as const;
-export const PACKAGE_VERSION = '0.1.0' as const;
+export const PACKAGE_VERSION = '1.0.0' as const;
 
 export type MemoryId = Identifier<'MemoryId'>;
 

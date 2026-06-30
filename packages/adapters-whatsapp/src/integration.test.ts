@@ -126,9 +126,9 @@ describe('Hermes ↔ WhatsApp integration', () => {
     const cfgMsg = formatConfigMessage(cfg.value);
     expect(cfgMsg.text).toContain('OPENROUTER_API_KEY');
     expect(cfgMsg.text).not.toContain('topsecret');
-    const versionMsg = formatVersionMessage('@agent-os/hermes', '0.1.0');
+    const versionMsg = formatVersionMessage('@agent-os/adapters-whatsapp', '1.0.0');
     expect(versionMsg.text).toContain('agent');
-    expect(versionMsg.text).toContain('/hermes');
+    expect(versionMsg.text).toContain('/adapters-');
   });
 
   it('integration of error formatter + real Hermes error', async () => {

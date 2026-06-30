@@ -80,4 +80,4 @@ export type {
 } from './HermesPluginLoader.js';
 
 export const PACKAGE_NAME = '@agent-os/hermes' as const;
-export const PACKAGE_VERSION = '0.1.0' as const;
+export const PACKAGE_VERSION = '1.0.0' as const;

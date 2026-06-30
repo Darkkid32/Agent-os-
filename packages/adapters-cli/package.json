@@ -1,6 +1,6 @@
 {
   "name": "@agent-os/adapters-cli",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "description": "Command-line adapter for the Hermes kernel. Phase 3.1.",
   "type": "module",

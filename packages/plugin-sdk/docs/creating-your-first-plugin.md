@@ -29,7 +29,7 @@ const myPlugin = definePlugin({
     description: 'A simple plugin',
     capabilities: [],
     dependencies: [],
-    minimumAgentOSVersion: '0.1.0',
+    minimumAgentOSVersion: '1.0.0',
   },
   initialize: async (context) => {
     context.logger.info('My plugin initialized');
@@ -59,7 +59,7 @@ const myPlugin = definePlugin({
     description: 'A plugin with full lifecycle',
     capabilities: ['monitoring'],
     dependencies: [],
-    minimumAgentOSVersion: '0.1.0',
+    minimumAgentOSVersion: '1.0.0',
   },
   initialize: async (context) => {
     context.logger.info('Plugin initialized');
@@ -99,7 +99,7 @@ const manifest = createPluginManifest({
   description: 'A validated plugin manifest',
   capabilities: ['greeting'],
   dependencies: [],
-  // minimumAgentOSVersion defaults to '0.1.0'
+  // minimumAgentOSVersion defaults to '1.0.0'
 });
 
 // Use with definePlugin
@@ -140,7 +140,7 @@ const myPlugin = definePlugin({
     description: 'Plugin with configuration',
     capabilities: [],
     dependencies: [],
-    minimumAgentOSVersion: '0.1.0',
+    minimumAgentOSVersion: '1.0.0',
     configSchema,
   },
   configSchema,

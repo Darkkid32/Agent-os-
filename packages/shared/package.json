@@ -1,6 +1,6 @@
 {
   "name": "@agent-os/shared",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "description": "Cross-cutting shared types and Zod schemas used by API and runtime.",
   "type": "module",

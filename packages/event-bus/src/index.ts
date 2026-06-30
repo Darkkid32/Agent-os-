@@ -7,7 +7,7 @@
 import type { Identifier, Timestamp } from '@agent-os/core';
 
 export const PACKAGE_NAME = '@agent-os/event-bus' as const;
-export const PACKAGE_VERSION = '0.1.0' as const;
+export const PACKAGE_VERSION = '1.0.0' as const;
 
 export type Topic = Identifier<'Topic'>;
 export type SubscriptionId = Identifier<'SubscriptionId'>;

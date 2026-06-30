@@ -6,7 +6,7 @@ import {
 } from '@agent-os/plugins';
 import type { PluginManifestInput } from './types.js';
 
-const DEFAULT_AGENT_OS_VERSION = '0.1.0';
+const DEFAULT_AGENT_OS_VERSION = '1.0.0';
 
 export const createPluginManifest = (input: PluginManifestInput): PluginManifest => {
   const capabilities: readonly string[] = input.capabilities ?? [];

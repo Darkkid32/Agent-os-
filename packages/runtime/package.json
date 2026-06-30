@@ -1,6 +1,6 @@
 {
   "name": "@agent-os/runtime",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "description": "Agent OS operational readiness — health, startup, shutdown, and diagnostics.",
   "type": "module",

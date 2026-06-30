@@ -49,7 +49,7 @@ import { configCommand } from './commands/ConfigCommand.js';
 import { versionCommand } from './commands/VersionCommand.js';
 
 export const ADAPTER_NAME = '@agent-os/adapters-whatsapp';
-export const ADAPTER_VERSION = '0.1.0';
+export const ADAPTER_VERSION = '1.0.0';
 export const WEBHOOK_PATH = '/v1/adapters/whatsapp/webhook';
 export const SUPPORTED_OPERATIONS: readonly string[] = [
   'start',

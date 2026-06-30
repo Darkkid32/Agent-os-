@@ -15,7 +15,7 @@ export interface MockSnapshot {
   readonly version: HermesVersionDTO;
 }
 
-const mockVersion: HermesVersionDTO = { name: '@agent-os/hermes', version: '0.1.0' };
+const mockVersion: HermesVersionDTO = { name: '@agent-os/hermes', version: '1.0.0' };
 
 const mockConfig: HermesConfigDTO = {
   nodeEnv: 'development',

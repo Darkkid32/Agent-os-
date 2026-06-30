@@ -1,6 +1,6 @@
 {
   "name": "@agent-os/observability",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "description": "OpenTelemetry wiring, traces, metrics, and log exports.",
   "type": "module",

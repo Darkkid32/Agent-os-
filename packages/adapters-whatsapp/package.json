@@ -1,6 +1,6 @@
 {
   "name": "@agent-os/adapters-whatsapp",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "description": "WhatsApp adapter for the Hermes kernel. Phase 5.",
   "type": "module",

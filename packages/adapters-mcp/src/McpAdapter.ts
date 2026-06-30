@@ -53,7 +53,7 @@ import { formatPermissionDenied, formatUnexpectedError } from './formats.js';
 import { ALL_TOOLS } from './tools.js';
 
 export const ADAPTER_NAME = '@agent-os/adapters-mcp';
-export const ADAPTER_VERSION = '0.1.0';
+export const ADAPTER_VERSION = '1.0.0';
 
 const isPermissionError = (e: unknown): e is McpPermissionError => e instanceof McpPermissionError;
 

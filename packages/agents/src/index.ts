@@ -8,7 +8,7 @@ import type { Identifier } from '@agent-os/core';
 import type { RuntimeContext } from '@agent-os/runtime';
 
 export const PACKAGE_NAME = '@agent-os/agents' as const;
-export const PACKAGE_VERSION = '0.1.0' as const;
+export const PACKAGE_VERSION = '1.0.0' as const;
 
 export type AgentId = Identifier<'AgentId'>;
 

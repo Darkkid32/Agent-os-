@@ -136,10 +136,11 @@ describe('Hermes ↔ Telegram integration', () => {
     // formatted form rather than the raw field name.
     expect(cfgMsg.text).toContain('OPENROUTER\\_API\\_KEY');
     expect(cfgMsg.text).not.toContain('topsecret');
-    const versionMsg = formatVersionMessage('@agent-os/hermes', '0.1.0');
-    // MarkdownV2 escapes the hyphen in `@agent-os/hermes`.
+    const versionMsg = formatVersionMessage('@agent-os/adapters-telegram', '1.0.0');
+    // MarkdownV2 escapes the hyphen in `@agent-os/adapters-telegram`.
     expect(versionMsg.text).toContain('agent');
-    expect(versionMsg.text).toContain('/hermes');
+    expect(versionMsg.text).toContain('adapters');
+    expect(versionMsg.text).toContain('telegram');
   });
 
   it('integration of error formatter + real Hermes error', async () => {

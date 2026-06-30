@@ -62,7 +62,7 @@ import { configCommand } from './commands/ConfigCommand.js';
 import { versionCommand } from './commands/VersionCommand.js';
 
 export const DISCORD_PACKAGE_NAME = '@agent-os/adapters-discord' as const;
-export const DISCORD_PACKAGE_VERSION = '0.1.0' as const;
+export const DISCORD_PACKAGE_VERSION = '1.0.0' as const;
 
 interface RuntimeState {
   readonly hermes: HermesPort;

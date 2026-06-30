@@ -60,7 +60,7 @@ import { configCommand } from './commands/ConfigCommand.js';
 import { versionCommand } from './commands/VersionCommand.js';
 
 export const ADAPTER_NAME = '@agent-os/adapters-telegram';
-export const ADAPTER_VERSION = '0.1.0';
+export const ADAPTER_VERSION = '1.0.0';
 export const SUPPORTED_OPERATIONS: readonly string[] = [
   'start',
   'stop',

@@ -49,7 +49,7 @@ import { configCommand } from '../commands/ConfigCommand.js';
 import { versionCommand } from '../commands/VersionCommand.js';
 
 export const CLI_PACKAGE_NAME = '@agent-os/adapters-cli' as const;
-export const CLI_PACKAGE_VERSION = '0.1.0' as const;
+export const CLI_PACKAGE_VERSION = '1.0.0' as const;
 
 /**
  * Per-platform.md §4.3, every adapter declares its identity as
