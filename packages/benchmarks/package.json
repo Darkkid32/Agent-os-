@@ -1,0 +1,54 @@
+{
+  "name": "@agent-os/benchmarks",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Agent OS performance benchmarks and stress tests.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --ext .ts --max-warnings=0",
+    "test": "vitest run",
+    "bench": "vitest bench",
+    "clean": "rimraf dist"
+  },
+  "keywords": [
+    "agent-os",
+    "benchmarks",
+    "performance"
+  ],
+  "author": "Agent OS Maintainers",
+  "license": "Apache-2.0",
+  "agent-os": {
+    "layer": 4,
+    "audience": "internal",
+    "kind": "app"
+  },
+  "dependencies": {
+    "@agent-os/auth": "workspace:*",
+    "@agent-os/config": "workspace:*",
+    "@agent-os/core": "workspace:*",
+    "@agent-os/hermes": "workspace:*",
+    "@agent-os/observability": "workspace:*",
+    "@agent-os/plugins": "workspace:*",
+    "@agent-os/plugin-sdk": "workspace:*",
+    "@agent-os/runtime": "workspace:*"
+  },
+  "devDependencies": {
+    "vitest": "^4.1.9"
+  }
+}

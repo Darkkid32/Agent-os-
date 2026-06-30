@@ -30,6 +30,12 @@
       "@agent-os/hermes/*": ["packages/hermes/src/*"],
       "@agent-os/plugin-sdk": ["packages/plugin-sdk/src/index.ts"],
       "@agent-os/plugin-sdk/*": ["packages/plugin-sdk/src/*"],
+      "@agent-os/benchmarks": ["packages/benchmarks/src/index.ts"],
+      "@agent-os/benchmarks/*": ["packages/benchmarks/src/*"],
+      "@agent-os/adapters-webhook": ["packages/adapters-webhook/src/index.ts"],
+      "@agent-os/adapters-webhook/*": ["packages/adapters-webhook/src/*"],
+      "@agent-os/adapters-cli": ["packages/adapters-cli/src/index.ts"],
+      "@agent-os/adapters-cli/*": ["packages/adapters-cli/src/*"],
       "@/api/*": ["apps/api/src/*"],
       "@/dashboard/*": ["apps/dashboard/src/*"]
     }

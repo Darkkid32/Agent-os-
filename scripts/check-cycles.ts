@@ -35,6 +35,7 @@ const PACKAGE_SLUGS = [
   'hermes',
   'plugins',
   'plugin-sdk',
+  'benchmarks',
   'adapters-cli',
   'adapters-discord',
   'adapters-telegram',
