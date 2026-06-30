@@ -8,7 +8,7 @@
  * Layer: 2 (Platform)
  * Dependencies: @agent-os/core (Result), @agent-os/observability (Logger),
  *   PluginDiscovery, PluginLoader, PluginRegistry, PluginLifecycleManager,
- *   PluginDependencyValidator, PluginMetadataValidator, types
+ *   PluginDependencyValidator, PluginMetadataValidator, PluginConfig, types
  */
 
 import { createPluginDiscovery } from './PluginDiscovery.js';
@@ -17,6 +17,7 @@ import { createPluginRegistry } from './PluginRegistry.js';
 import { createPluginLifecycleManager } from './PluginLifecycleManager.js';
 import { validateAllDependencies } from './PluginDependencyValidator.js';
 import { validateAgentOSCompatibility } from './PluginMetadataValidator.js';
+import { createPluginConfig, createDefaultSources, validateConfig } from './PluginConfig.js';
 import type {
   PluginPlatform,
   PluginPlatformOptions,
@@ -25,6 +26,7 @@ import type {
   PluginDiscoveryEntry,
   PluginRegistry,
   PluginLifecycleManager,
+  PluginConfigSource,
 } from './types.js';
 
 export interface PluginPlatformInternals {
@@ -35,12 +37,26 @@ export interface PluginPlatformInternals {
 }
 
 export const createPluginPlatform = (options: PluginPlatformOptions): PluginPlatform => {
-  const { directories, agentOSVersion, logger } = options;
+  const { directories, agentOSVersion, logger, globalConfig, envOverrides } = options;
 
   const discovery = createPluginDiscovery();
   const loader = createPluginLoader();
   const registry = createPluginRegistry();
   const lifecycle = createPluginLifecycleManager({ registry, logger });
+
+  // Create default config sources from global config and env overrides
+  const defaultSources = createDefaultSources(globalConfig, envOverrides);
+
+  const createPluginSources = (
+    _pluginId: string,
+    pluginSources?: readonly PluginConfigSource[],
+  ): readonly PluginConfigSource[] => {
+    const sources = [...defaultSources];
+    if (pluginSources != null) {
+      sources.push(...pluginSources);
+    }
+    return sources;
+  };
 
   const discover = async (): Promise<PluginDiscoveryResult> => {
     logger.info('plugin discovery started', { directories: [...directories] });
@@ -195,6 +211,33 @@ export const createPluginPlatform = (options: PluginPlatformOptions): PluginPlat
           error: registerResult.error.message,
         });
         continue;
+      }
+
+      // Validate plugin configuration if schema is declared
+      const pluginSchema = loadResult.value.manifest.configSchema;
+      if (pluginSchema != null) {
+        const sources = createPluginSources(entry.manifest.id);
+        const pluginConfig = createPluginConfig({
+          schema: pluginSchema,
+          sources,
+          pluginId: entry.manifest.id,
+        });
+
+        const configValidation = validateConfig(pluginConfig.all(), pluginSchema);
+        if (!configValidation.valid) {
+          const errorMsg = configValidation.errors.map((e) => `${e.path}: ${e.message}`).join('; ');
+          logger.error('plugin configuration invalid', {
+            pluginId: entry.manifest.id,
+            error: errorMsg,
+          });
+          registry.updateError(entry.manifest.id, `Config invalid: ${errorMsg}`);
+          failed.push({
+            source: entry.source,
+            pluginId: entry.manifest.id,
+            error: `Config invalid: ${errorMsg}`,
+          });
+          continue;
+        }
       }
 
       // Initialize the plugin

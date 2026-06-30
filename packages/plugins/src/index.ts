@@ -3,7 +3,7 @@
  *
  * Plugin platform foundation for Agent OS. Provides manifest types,
  * plugin interface, registry, lifecycle management, validation,
- * and dynamic plugin loading from configurable directories.
+ * dynamic plugin loading, and plugin configuration.
  *
  * Layer: 2 (Platform)
  */
@@ -46,6 +46,15 @@ export type {
   PluginPlatformLoadResult,
   PluginPlatformLoadFailure,
   PluginPlatform,
+  // Phase 7.3 types
+  PluginConfigFieldType,
+  PluginConfigFieldSchema,
+  PluginConfigSchema,
+  PluginConfigValidationResult,
+  PluginConfigValidationError,
+  PluginConfigSource,
+  PluginConfig,
+  PluginConfigOptions,
 } from './types.js';
 
 export { PLUGIN_TERMINAL_PHASES, PLUGIN_VALID_TRANSITIONS } from './types.js';
@@ -82,3 +91,10 @@ export { validatePluginManifest, validateAgentOSCompatibility } from './PluginMe
 export { createPluginDiscovery } from './PluginDiscovery.js';
 export { createPluginLoader } from './PluginLoader.js';
 export { createPluginPlatform } from './PluginPlatform.js';
+
+// ---------------------------------------------------------------------------
+// Configuration (Phase 7.3)
+// ---------------------------------------------------------------------------
+
+export { createPluginConfig, validateConfig, createDefaultSources } from './PluginConfig.js';
+export { validatePluginConfig, applyDefaults } from './PluginConfigValidator.js';

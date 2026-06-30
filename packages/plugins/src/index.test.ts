@@ -14,6 +14,11 @@ import {
   createPluginDiscovery,
   createPluginLoader,
   createPluginPlatform,
+  createPluginConfig,
+  validateConfig,
+  createDefaultSources,
+  validatePluginConfig,
+  applyDefaults,
 } from './index.js';
 
 describe('index exports', () => {
@@ -68,5 +73,25 @@ describe('index exports', () => {
 
   it('exports createPluginPlatform', () => {
     expect(typeof createPluginPlatform).toBe('function');
+  });
+
+  it('exports createPluginConfig', () => {
+    expect(typeof createPluginConfig).toBe('function');
+  });
+
+  it('exports validateConfig', () => {
+    expect(typeof validateConfig).toBe('function');
+  });
+
+  it('exports createDefaultSources', () => {
+    expect(typeof createDefaultSources).toBe('function');
+  });
+
+  it('exports validatePluginConfig', () => {
+    expect(typeof validatePluginConfig).toBe('function');
+  });
+
+  it('exports applyDefaults', () => {
+    expect(typeof applyDefaults).toBe('function');
   });
 });

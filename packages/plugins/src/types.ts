@@ -33,6 +33,7 @@ export interface PluginManifest {
   readonly capabilities: readonly string[];
   readonly dependencies: readonly PluginDependency[];
   readonly minimumAgentOSVersion: string;
+  readonly configSchema?: PluginConfigSchema;
 }
 
 // ---------------------------------------------------------------------------
@@ -92,7 +93,7 @@ export interface PluginContext {
   readonly metrics: MetricRegistry;
   readonly tracer: Tracer;
   readonly eventBus: EventBus;
-  readonly config: PluginConfiguration;
+  readonly config: PluginConfig;
 }
 
 export interface HermesPort {
@@ -206,6 +207,55 @@ export interface PluginMetadataValidationResult {
 }
 
 // ---------------------------------------------------------------------------
+// Plugin Configuration (Phase 7.3)
+// ---------------------------------------------------------------------------
+
+export type PluginConfigFieldType = 'string' | 'number' | 'boolean' | 'object' | 'array';
+
+export interface PluginConfigFieldSchema {
+  readonly type: PluginConfigFieldType;
+  readonly required?: boolean;
+  readonly default?: unknown;
+  readonly description?: string;
+  readonly enum?: readonly unknown[];
+  readonly items?: PluginConfigFieldSchema;
+  readonly properties?: Readonly<Record<string, PluginConfigFieldSchema>>;
+}
+
+export interface PluginConfigSchema {
+  readonly [key: string]: PluginConfigFieldSchema;
+}
+
+export interface PluginConfigValidationResult {
+  readonly valid: boolean;
+  readonly errors: readonly PluginConfigValidationError[];
+}
+
+export interface PluginConfigValidationError {
+  readonly path: string;
+  readonly message: string;
+}
+
+export interface PluginConfigSource {
+  readonly priority: number;
+  readonly get: (pluginId: string) => PluginConfiguration | undefined;
+}
+
+export interface PluginConfig {
+  readonly get: <T = unknown>(key: string) => T | undefined;
+  readonly require: <T = unknown>(key: string) => T;
+  readonly has: (key: string) => boolean;
+  readonly all: () => PluginConfiguration;
+  readonly schema: () => PluginConfigSchema | undefined;
+}
+
+export interface PluginConfigOptions {
+  readonly schema?: PluginConfigSchema;
+  readonly sources: readonly PluginConfigSource[];
+  readonly pluginId: string;
+}
+
+// ---------------------------------------------------------------------------
 // Plugin Discovery (Phase 7.2)
 // ---------------------------------------------------------------------------
 
@@ -256,7 +306,8 @@ export interface PluginPlatformOptions {
   readonly tracer?: Tracer;
   readonly eventBus?: EventBus;
   readonly hermes?: HermesPort;
-  readonly config?: PluginConfiguration;
+  readonly globalConfig?: PluginConfiguration;
+  readonly envOverrides?: Readonly<Record<string, PluginConfiguration>>;
 }
 
 export interface PluginPlatformLoadResult {
