@@ -24,6 +24,8 @@
       "@agent-os/ui/*": ["packages/ui/src/*"],
       "@agent-os/hermes": ["packages/hermes/src/index.ts"],
       "@agent-os/hermes/*": ["packages/hermes/src/*"],
+      "@agent-os/plugin-sdk": ["packages/plugin-sdk/src/index.ts"],
+      "@agent-os/plugin-sdk/*": ["packages/plugin-sdk/src/*"],
       "@/api/*": ["apps/api/src/*"],
       "@/dashboard/*": ["apps/dashboard/src/*"]
     }

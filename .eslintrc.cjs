@@ -55,6 +55,7 @@ module.exports = {
     '**/coverage/**',
     'apps/dashboard/.next/**',
     '**/next-env.d.ts',
+    '**/src/**/*.d.ts',
   ],
   overrides: [
     {
@@ -63,6 +64,8 @@ module.exports = {
         '@typescript-eslint/no-explicit-any': 'off',
         '@typescript-eslint/no-unsafe-assignment': 'off',
         '@typescript-eslint/no-unsafe-member-access': 'off',
+        '@typescript-eslint/no-unsafe-call': 'off',
+        '@typescript-eslint/no-unsafe-return': 'off',
         'no-console': 'off',
       },
     },
