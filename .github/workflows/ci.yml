@@ -74,6 +74,27 @@ jobs:
             packages/*/dist
           retention-days: 1
 
+  graph-check:
+    name: Dependency Graph Check
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: Check dependency graph
+        run: pnpm run graph:check
+
   lint:
     name: Lint
     needs: build
@@ -153,3 +174,56 @@ jobs:
           path: packages
       - name: Run tests
         run: pnpm run test
+
+  benchmarks:
+    name: Benchmarks
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: github.event_name == 'push' || contains(github.event.pull_request.labels.*.name, 'run-benchmarks')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: Download dist artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-packages
+          path: packages
+      - name: Run benchmarks
+        run: pnpm --filter @agent-os/benchmarks run bench
+
+  package-validation:
+    name: Package Validation
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: Download dist artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-packages
+          path: packages
+      - name: Validate packages
+        run: tsx scripts/validate-packages.ts
