@@ -28,6 +28,7 @@ const PACKAGE_SLUGS = [
   'memory',
   'event-bus',
   'observability',
+  'config',
   'auth',
   'agents',
   'ui',

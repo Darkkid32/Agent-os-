@@ -20,6 +20,8 @@
       "@agent-os/event-bus/*": ["packages/event-bus/src/*"],
       "@agent-os/observability": ["packages/observability/src/index.ts"],
       "@agent-os/observability/*": ["packages/observability/src/*"],
+      "@agent-os/config": ["packages/config/src/index.ts"],
+      "@agent-os/config/*": ["packages/config/src/*"],
       "@agent-os/auth": ["packages/auth/src/index.ts"],
       "@agent-os/auth/*": ["packages/auth/src/*"],
       "@agent-os/ui": ["packages/ui/src/index.ts"],

@@ -12,7 +12,7 @@ package in a higher-numbered layer.
 | Layer | Packages |
 | ----- | -------- |
 | 1 — Foundation | `core`, `shared` |
-| 2 — Platform | `event-bus`, `memory`, `runtime`, `workflow`, `observability` |
+| 2 — Platform | `event-bus`, `memory`, `runtime`, `workflow`, `observability`, `config` |
 | 3 — Domain | `agents`, `adapters-sdk`, `adapters`, `ui` |
 | 4 — Surfaces | `hermes` |
 
@@ -53,9 +53,10 @@ In addition:
 | `adapters-sdk` | `core`                                                          |
 | `adapters`  | `core`, `adapters-sdk`                                             |
 | `observability` | `core`                                                         |
+| `config`     | `core`, `observability`                                            |
 | `ui`        | _(none — only Tailwind + React)_                                   |
 | `hermes`    | `core`, `runtime`, `observability`, `event-bus`                    |
-| `apps/api`  | `core`, `shared`, `runtime`, `observability`                       |
+| `apps/api`  | `core`, `shared`, `runtime`, `observability`, `config`, `auth`     |
 | `apps/dashboard` | `core`, `shared`, `ui`                                       |
 
 ## Enforcement
