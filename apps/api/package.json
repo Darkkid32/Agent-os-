@@ -29,6 +29,7 @@
     "kind": "app"
   },
   "dependencies": {
+    "@agent-os/auth": "workspace:*",
     "@agent-os/core": "workspace:*",
     "@agent-os/hermes": "workspace:*",
     "@agent-os/shared": "workspace:*",

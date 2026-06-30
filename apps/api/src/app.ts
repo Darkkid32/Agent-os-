@@ -10,6 +10,9 @@
  *
  * Phase 6.2: every incoming request is wrapped in an observability
  * context (requestId + correlationId) via `runWithContext()`.
+ *
+ * Phase 8.2: optional authentication via `auth` config. When supplied,
+ * the auth plugin validates credentials on every non-public route.
  */
 import Fastify, { type FastifyInstance, type FastifyRequest } from 'fastify';
 import cors from '@fastify/cors';
@@ -24,6 +27,7 @@ import {
   createAdapterMetrics,
   type MetricRegistry,
 } from '@agent-os/observability';
+import { addAuth, type AuthConfig } from '@agent-os/auth';
 import { healthRoutes } from './routes/health.js';
 import { versionRoutes } from './routes/version.js';
 import { hermesRoutes } from './routes/hermes.js';
@@ -33,6 +37,7 @@ export interface AppConfig {
   readonly corsOrigins: readonly string[];
   readonly hermes?: HermesPort;
   readonly metricRegistry?: MetricRegistry;
+  readonly auth?: AuthConfig;
 }
 
 export const defaultConfig: AppConfig = {
@@ -49,6 +54,11 @@ export async function buildApp(config: Partial<AppConfig> = {}): Promise<Fastify
   await app.register(helmet, { contentSecurityPolicy: false });
   await app.register(cors, { origin: [...merged.corsOrigins] });
   await app.register(sensible);
+
+  // Authentication: validate credentials on non-public routes when configured.
+  if (merged.auth) {
+    addAuth(app, merged.auth);
+  }
 
   // Observability context: every request gets a requestId + correlationId.
   app.addHook('onRequest', async (req: FastifyRequest) => {
