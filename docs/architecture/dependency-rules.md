@@ -47,7 +47,7 @@ In addition:
 | `shared`    | `core`                                                             |
 | `event-bus` | `core`                                                             |
 | `memory`    | `core`                                                             |
-| `runtime`   | `core`                                                             |
+| `runtime`   | `core`, `observability`                                            |
 | `workflow`  | `core`                                                             |
 | `agents`    | `core`, `runtime`                                                  |
 | `adapters-sdk` | `core`                                                          |

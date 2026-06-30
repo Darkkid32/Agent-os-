@@ -1,16 +1,20 @@
 /**
  * @agent-os/runtime
  *
- * Runtime lifecycle contracts. No implementation in Phase 1.1.
+ * Operational readiness — health, startup, shutdown, and diagnostics
+ * for the Agent OS platform.
  */
-
-import type { Identifier, Result, Timestamp } from '@agent-os/core';
 
 export const PACKAGE_NAME = '@agent-os/runtime' as const;
 export const PACKAGE_VERSION = '0.1.0' as const;
 
-export type RuntimeId = Identifier<'RuntimeId'>;
+// ---------------------------------------------------------------------------
+// Existing lifecycle types (Phase 1.1)
+// ---------------------------------------------------------------------------
 
+import type { Identifier, Result, Timestamp } from '@agent-os/core';
+
+export type RuntimeId = Identifier<'RuntimeId'>;
 export type LifecyclePhase = 'init' | 'starting' | 'running' | 'draining' | 'stopped' | 'errored';
 
 export interface RuntimeContext {
@@ -27,3 +31,44 @@ export interface RuntimePort {
   readonly start: (ctx: RuntimeContext) => Promise<Result<void>>;
   readonly stop: (ctx: RuntimeContext) => Promise<Result<void>>;
 }
+
+// ---------------------------------------------------------------------------
+// Operational readiness types (Phase 8.4)
+// ---------------------------------------------------------------------------
+
+export type {
+  HealthStatus,
+  HealthCheckResult,
+  HealthReport,
+  ReadinessReport,
+  HealthCheckFn,
+  HealthManagerConfig,
+  ShutdownPhase,
+  ShutdownStep,
+  ShutdownManagerConfig,
+  ShutdownStatus,
+  StartupPhase,
+  StartupStep,
+  StartupManagerConfig,
+  StartupStatus,
+  BuildInfo,
+  DiagnosticsReport,
+  MemoryUsageReport,
+  EventBusStatusReport,
+} from './types.js';
+
+// ---------------------------------------------------------------------------
+// Managers
+// ---------------------------------------------------------------------------
+
+export { createHealthManager } from './HealthManager.js';
+export type { HealthManager } from './HealthManager.js';
+
+export { createShutdownManager } from './ShutdownManager.js';
+export type { ShutdownManager } from './ShutdownManager.js';
+
+export { createStartupManager } from './StartupManager.js';
+export type { StartupManager } from './StartupManager.js';
+
+export { createDiagnostics } from './RuntimeDiagnostics.js';
+export type { RuntimeDiagnostics, DiagnosticsConfig } from './RuntimeDiagnostics.js';

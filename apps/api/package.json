@@ -30,8 +30,10 @@
   },
   "dependencies": {
     "@agent-os/auth": "workspace:*",
+    "@agent-os/config": "workspace:*",
     "@agent-os/core": "workspace:*",
     "@agent-os/hermes": "workspace:*",
+    "@agent-os/runtime": "workspace:*",
     "@agent-os/shared": "workspace:*",
     "@agent-os/observability": "workspace:*",
     "@fastify/cors": "^10.0.1",

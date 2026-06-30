@@ -28,6 +28,7 @@ import {
   type MetricRegistry,
 } from '@agent-os/observability';
 import { addAuth, type AuthConfig } from '@agent-os/auth';
+import type { HealthManager, RuntimeDiagnostics } from '@agent-os/runtime';
 import { healthRoutes } from './routes/health.js';
 import { versionRoutes } from './routes/version.js';
 import { hermesRoutes } from './routes/hermes.js';
@@ -38,6 +39,8 @@ export interface AppConfig {
   readonly hermes?: HermesPort;
   readonly metricRegistry?: MetricRegistry;
   readonly auth?: AuthConfig;
+  readonly healthManager?: HealthManager;
+  readonly diagnostics?: RuntimeDiagnostics;
 }
 
 export const defaultConfig: AppConfig = {
@@ -98,7 +101,11 @@ export async function buildApp(config: Partial<AppConfig> = {}): Promise<Fastify
     if (reply.statusCode >= 400) metrics.errorsTotal.inc();
   });
 
-  await app.register(healthRoutes, { prefix: '/health' });
+  await app.register(healthRoutes, {
+    prefix: '/health',
+    healthManager: merged.healthManager,
+    diagnostics: merged.diagnostics,
+  });
   await app.register(versionRoutes, { prefix: '/version' });
 
   if (merged.hermes) {
