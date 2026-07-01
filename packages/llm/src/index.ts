@@ -104,3 +104,78 @@ export {
   listBuilders,
 } from './factory/index.js';
 export type { ProviderBuilder } from './factory/index.js';
+
+// Tool calling framework
+export {
+  // Registry
+  DefaultToolRegistry,
+  getGlobalToolRegistry,
+  resetGlobalToolRegistry,
+
+  // Executor
+  DefaultToolExecutor,
+  allowAllPermissions,
+
+  // Validation
+  validateRequired,
+  validateTypes,
+  validateUnknown,
+  validatePluginAvailable,
+  validateEnabled,
+  validateToolCall,
+
+  // Translation
+  toOpenAITool,
+  toAnthropicTool,
+  toGeminiTool,
+  translateTools,
+
+  // Errors
+  ToolError,
+  ToolNotFoundError,
+  ToolValidationError,
+  ToolPermissionError,
+  ToolTimeoutError,
+  ToolPluginUnavailableError,
+  ToolExecutionError,
+  ToolDisabledError,
+  isToolError,
+} from './tools/index.js';
+
+export type {
+  // Types
+  ToolParameterSchema,
+  ToolParameterSet,
+  ToolParameter,
+  ToolPermission,
+  ToolDefinition,
+  ToolCall,
+  ToolResult,
+  ProviderToolDefinition,
+  ToolTranslator,
+  ToolExecutionContext,
+  ToolExecutionHandler,
+  ToolRegistryEntry,
+  ToolEventBase,
+  ToolRequestedEvent,
+  ToolStartedEvent,
+  ToolCompletedEvent,
+  ToolFailedEvent,
+  ToolEvent,
+  ToolEventHandler,
+
+  // Registry
+  ToolRegistry,
+
+  // Validation
+  ValidationResult,
+
+  // Translation
+  ProviderType,
+
+  // Executor
+  PermissionChecker,
+
+  // Errors
+  ToolErrorCode,
+} from './tools/index.js';

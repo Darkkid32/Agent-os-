@@ -11,7 +11,7 @@ import { isLLMError } from './errors.js';
 
 export interface InstrumentationOptions {
   readonly providerId: string;
-  readonly operation: 'chat' | 'stream' | 'embeddings' | 'health';
+  readonly operation: 'chat' | 'stream' | 'embeddings' | 'health' | 'tool';
   readonly model?: string;
   readonly logger?: Logger;
   readonly additionalAttributes?: Readonly<Record<string, string>>;
