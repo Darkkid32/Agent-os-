@@ -179,3 +179,107 @@ export type {
   // Errors
   ToolErrorCode,
 } from './tools/index.js';
+
+// Planning engine
+export {
+  // Engine
+  PlanningEngine,
+
+  // Strategies
+  SequentialStrategy,
+  ParallelStrategy,
+  ConditionalStrategy,
+  getStrategy,
+  registerStrategy,
+  listStrategies,
+  hasStrategy,
+
+  // Validation
+  validateNoDuplicateIds,
+  validateDependenciesExist,
+  validateNoCycles,
+  validateToolsExist,
+  validateNotEmpty,
+  validateStepFields,
+  validatePlan,
+
+  // Serialization
+  serializePlan,
+  deserializePlan,
+  planToJSON,
+  planFromJSON,
+
+  // Prompt
+  buildSystemPrompt,
+  buildUserPrompt,
+  buildReplanPrompt,
+
+  // Context
+  createPlanningContext,
+  getToolsForPlugins,
+  findToolById,
+
+  // Errors
+  PlanningError,
+  PlanningFailedError,
+  InvalidGoalError,
+  NoToolsAvailableError,
+  StrategyNotSupportedError,
+  MaxStepsExceededError,
+  PlanValidationError,
+  CycleDetectedError,
+  MissingDependencyError,
+  DuplicateStepIdError,
+  EmptyPlanError,
+  InvalidDependencyError,
+  isPlanningError,
+} from './planning/index.js';
+
+export type {
+  // Types
+  PlanStatus,
+  PlanPriority,
+  ComplexityLevel,
+  RiskLevel,
+  PlanningStrategyType,
+  PlanGoal,
+  PlanConstraint,
+  PlanStep,
+  PlanDependency,
+  PlanResult,
+  PlanningRequest,
+  PlanningResponse,
+  PlanningEventBase,
+  PlanningStartedEvent,
+  PlanCreatedEvent,
+  PlanValidatedEvent,
+  PlanRejectedEvent,
+  PlanningCompletedEvent,
+  PlanningFailedEvent,
+  PlanningEvent,
+  PlanningEventHandler,
+
+  // Context
+  PlanningContext,
+
+  // Strategy
+  PlanningStrategy,
+
+  // Validation
+  PlanningValidationResult,
+
+  // Serialization
+  SerializedPlan,
+  SerializedGoal,
+  SerializedStep,
+  SerializedDependency,
+  SerializedConstraint,
+
+  // Planner
+  Planner,
+  PlanningValidation,
+  ReplanInput,
+
+  // Errors
+  PlanningErrorCode,
+} from './planning/index.js';
