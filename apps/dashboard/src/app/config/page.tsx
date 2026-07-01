@@ -1,30 +1,60 @@
-import { fetchDashboardData } from '../../dashboard/hooks/fetchDashboardData';
-import { ConfigView } from '../../dashboard/components/ConfigView';
-import { ErrorPanel } from '../../dashboard/components/ErrorPanel';
+'use client';
 
-export const dynamic = 'force-dynamic';
+import { usePolling } from '../../dashboard/hooks/usePolling';
+import type { DashboardEnvelope, HermesConfigDTO } from '../../dashboard/api/types';
 
-export default async function ConfigPage(): Promise<JSX.Element> {
-  const env = await fetchDashboardData((c) => c.config());
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? '/v1';
+
+async function fetchConfig(): Promise<DashboardEnvelope<HermesConfigDTO>> {
+  const res = await fetch(`${API_BASE}/config`);
+  const body = (await res.json()) as {
+    ok: boolean;
+    value?: HermesConfigDTO;
+    error?: { code: string; message: string };
+  };
+  if (body.ok && body.value)
+    return { ok: true, data: body.value, requestId: '', at: new Date().toISOString() };
+  return {
+    ok: false,
+    error: body.error ?? { code: 'UNKNOWN', message: 'Unknown error' },
+    requestId: '',
+    at: new Date().toISOString(),
+  };
+}
+
+export default function ConfigPage() {
+  const { data, loading, error, lastUpdated } = usePolling({
+    fetcher: fetchConfig,
+    intervalMs: 10000,
+  });
+
   return (
     <div className="space-y-6">
-      <header className="space-y-1">
-        <h1 className="text-3xl font-semibold tracking-tight">Configuration</h1>
-        <p className="text-sm text-muted-foreground">
-          Active Hermes configuration. Secret values are redacted.
-        </p>
-      </header>
-      {env.ok ? (
-        <ConfigView config={env.data} />
-      ) : (
-        <ErrorPanel
-          error={{
-            code: env.error.code,
-            message: env.error.message,
-            requestId: env.requestId,
-          }}
-        />
-      )}
+      <h1 className="text-2xl font-bold">Configuration</h1>
+      <div className="rounded-lg border bg-card p-6">
+        {loading && !data && <p className="text-sm text-muted-foreground">Loading...</p>}
+        {data && (
+          <dl className="space-y-3">
+            {Object.entries(data).map(([key, value]) => (
+              <div
+                key={key}
+                className="flex items-center justify-between border-b pb-2 last:border-0"
+              >
+                <dt className="text-sm font-medium">{key}</dt>
+                <dd className="text-sm text-muted-foreground font-mono">
+                  {typeof value === 'boolean' ? (value ? 'true' : 'false') : String(value ?? '—')}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        )}
+        {error && <p className="text-sm text-destructive">{error}</p>}
+        {lastUpdated && (
+          <p className="text-xs text-muted-foreground mt-4">
+            Last updated: {new Date(lastUpdated).toLocaleTimeString()}
+          </p>
+        )}
+      </div>
     </div>
   );
 }

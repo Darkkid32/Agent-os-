@@ -81,3 +81,5 @@ export type {
 
 export const PACKAGE_NAME = '@agent-os/hermes' as const;
 export const PACKAGE_VERSION = '1.0.0' as const;
+
+export { GraphitiEventWriter } from './graphiti/index.js';

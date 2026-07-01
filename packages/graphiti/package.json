@@ -1,8 +1,8 @@
 {
-  "name": "@agent-os/hermes",
+  "name": "@agent-os/graphiti",
   "version": "1.0.0",
   "private": true,
-  "description": "Hermes integration layer — lifecycle, execution engine, plugin loading, and module orchestration.",
+  "description": "Knowledge graph backend for Agent OS — entities, relationships, and graph queries.",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -12,11 +12,6 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "default": "./dist/index.js"
-    },
-    "./test-utils": {
-      "types": "./dist/test-utils/hermes-mock.d.ts",
-      "import": "./dist/test-utils/hermes-mock.js",
-      "default": "./dist/test-utils/hermes-mock.js"
     },
     "./package.json": "./package.json"
   },
@@ -36,23 +31,17 @@
   },
   "keywords": [
     "agent-os",
-    "hermes"
+    "graphiti",
+    "knowledge-graph"
   ],
   "author": "Agent OS Maintainers",
   "license": "Apache-2.0",
   "agent-os": {
-    "layer": 4,
+    "layer": 2,
     "audience": "internal"
   },
   "dependencies": {
-    "@agent-os/core": "workspace:*",
-    "@agent-os/event-bus": "workspace:*",
-    "@agent-os/graphiti": "workspace:*",
-    "@agent-os/llm": "workspace:*",
-    "@agent-os/memory": "workspace:*",
-    "@agent-os/observability": "workspace:*",
-    "@agent-os/runtime": "workspace:*",
-    "zod": "^3.23.8"
+    "@agent-os/core": "workspace:*"
   },
   "devDependencies": {
     "vitest": "^4.1.9"

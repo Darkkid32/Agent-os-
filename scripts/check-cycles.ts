@@ -31,6 +31,7 @@ const PACKAGE_SLUGS = [
   'config',
   'auth',
   'llm',
+  'graphiti',
   'agents',
   'ui',
   'hermes',

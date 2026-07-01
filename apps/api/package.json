@@ -31,6 +31,7 @@
   "dependencies": {
     "@agent-os/auth": "workspace:*",
     "@agent-os/core": "workspace:*",
+    "@agent-os/graphiti": "workspace:*",
     "@agent-os/hermes": "workspace:*",
     "@agent-os/runtime": "workspace:*",
     "@agent-os/observability": "workspace:*",

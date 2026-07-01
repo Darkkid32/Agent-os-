@@ -5,8 +5,8 @@ import './globals.css';
 import { Nav } from '../dashboard/components/Nav';
 
 export const metadata: Metadata = {
-  title: 'Agent OS Dashboard',
-  description: 'Operator dashboard for the Agent OS platform.',
+  title: 'Mission Control — Agent OS',
+  description: 'Mission Control dashboard for the Agent OS platform.',
 };
 
 export default function RootLayout({ children }: { readonly children: ReactNode }): JSX.Element {
@@ -14,7 +14,7 @@ export default function RootLayout({ children }: { readonly children: ReactNode 
     <html lang="en" suppressHydrationWarning>
       <body className="min-h-screen bg-background font-sans antialiased">
         <Nav />
-        <main className="container py-8">{children}</main>
+        <main className="container py-6">{children}</main>
       </body>
     </html>
   );

@@ -18,6 +18,7 @@ import Fastify, { type FastifyInstance, type FastifyRequest } from 'fastify';
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import sensible from '@fastify/sensible';
+import { InMemoryGraphiti } from '@agent-os/graphiti';
 import type { HermesPort } from '@agent-os/hermes';
 import {
   createLogger,
@@ -32,6 +33,8 @@ import type { HealthManager, RuntimeDiagnostics } from '@agent-os/runtime';
 import { healthRoutes } from './routes/health.js';
 import { versionRoutes } from './routes/version.js';
 import { hermesRoutes } from './routes/hermes.js';
+import { graphRoutes } from './routes/graph.js';
+import { missionControlRoutes } from './routes/mission-control.js';
 
 export interface AppConfig {
   readonly logger: boolean | { readonly level: string };
@@ -41,6 +44,7 @@ export interface AppConfig {
   readonly auth?: AuthConfig;
   readonly healthManager?: HealthManager;
   readonly diagnostics?: RuntimeDiagnostics;
+  readonly graph?: InMemoryGraphiti;
 }
 
 export const defaultConfig: AppConfig = {
@@ -54,6 +58,7 @@ export async function buildApp(config: Partial<AppConfig> = {}): Promise<Fastify
   const requestLogger = createLogger({ defaultAdapter: 'api' });
   const metricRegistry = merged.metricRegistry ?? createMetricRegistry();
   const metrics = createAdapterMetrics(metricRegistry, 'api');
+  const graph = merged.graph ?? new InMemoryGraphiti();
 
   await app.register(helmet, { contentSecurityPolicy: false });
   await app.register(cors, { origin: [...merged.corsOrigins] });
@@ -114,6 +119,17 @@ export async function buildApp(config: Partial<AppConfig> = {}): Promise<Fastify
       prefix: '/v1',
       hermes: merged.hermes,
       metricRegistry,
+    });
+
+    await app.register(graphRoutes, {
+      prefix: '/v1/graph',
+      graph,
+    });
+
+    await app.register(missionControlRoutes, {
+      prefix: '/v1',
+      hermes: merged.hermes,
+      graph,
     });
   }
 

@@ -12,7 +12,7 @@ package in a higher-numbered layer.
 | Layer | Packages |
 | ----- | -------- |
 | 1 — Foundation | `core`, `shared` |
-| 2 — Platform | `event-bus`, `llm`, `memory`, `runtime`, `workflow`, `observability`, `config`, `auth`, `plugins` |
+| 2 — Platform | `event-bus`, `llm`, `memory`, `runtime`, `workflow`, `observability`, `config`, `auth`, `plugins`, `graphiti` |
 | 3 — Domain | `agents`, `plugin-sdk`, `ui`, `adapters-cli`, `adapters-discord`, `adapters-email`, `adapters-mcp`, `adapters-telegram`, `adapters-webhook`, `adapters-whatsapp` |
 | 4 — Surfaces | `hermes`, `benchmarks` |
 
@@ -27,13 +27,18 @@ In addition:
   workflows, memory and adapters. Every dependency on `hermes` is a coupling
   that defeats the layering. The rule **"Hermes must not directly depend on
   every package"** is enforced by inspection — `hermes` is allowed to depend
-  on `core`, `shared`, `runtime`, `observability`, `event-bus`, `llm`, and
-  `memory` for the eventual integration — but never on `adapters` or `agents`
+  on `core`, `shared`, `runtime`, `observability`, `event-bus`, `llm`, `memory`,
+  and `graphiti` for the eventual integration — but never on `adapters` or `agents`
   directly.
 
 - `adapters` are the only packages allowed to depend on concrete third-party
   SDKs (HTTP clients, vector stores, etc.). Each adapter package is
   self-contained with its own commands, types, and formatting.
+
+- `graphiti` is the knowledge graph backend at layer 2. It defines the types,
+  provider interface, and in-memory implementation for the knowledge graph.
+  `hermes` writes execution events to the graph; `apps/api` exposes graph
+  endpoints for Mission Control.
 
 - `ui` and `apps/dashboard` are the only nodes allowed to depend on React.
   Every other package is headless.
@@ -57,9 +62,9 @@ In addition:
 | `plugin-sdk`| `core`, `plugins`                                                  |
 | `ui`        | _(none — only Tailwind + React)_                                   |
 | `adapters-*`| `core`, `hermes`, `observability`                                  |
-| `hermes`    | `core`, `shared`, `runtime`, `observability`, `event-bus`, `llm`, `memory` |
+| `hermes`    | `core`, `shared`, `runtime`, `observability`, `event-bus`, `llm`, `memory`, `graphiti` |
 | `benchmarks`| `core`, `auth`, `config`, `hermes`, `observability`, `plugins`, `plugin-sdk`, `runtime` |
-| `apps/api`  | `core`, `shared`, `runtime`, `observability`, `config`, `auth`, `hermes` |
+| `apps/api`  | `core`, `shared`, `runtime`, `observability`, `config`, `auth`, `hermes`, `graphiti` |
 | `apps/dashboard` | `ui`                                                          |
 
 ## Enforcement

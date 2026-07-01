@@ -65,6 +65,9 @@ importers:
       '@agent-os/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@agent-os/graphiti':
+        specifier: workspace:*
+        version: link:../../packages/graphiti
       '@agent-os/hermes':
         specifier: workspace:*
         version: link:../../packages/hermes
@@ -351,6 +354,16 @@ importers:
         specifier: workspace:*
         version: link:../core
 
+  packages/graphiti:
+    dependencies:
+      '@agent-os/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      vitest:
+        specifier: ^4.1.9
+        version: 4.1.9(@opentelemetry/api@1.9.1)(@types/node@20.19.43)(@vitest/coverage-v8@4.1.9)(vite@8.1.0(@types/node@20.19.43)(esbuild@0.28.1)(jiti@2.6.1)(tsx@4.22.4)(yaml@2.9.0))
+
   packages/hermes:
     dependencies:
       '@agent-os/core':
@@ -359,6 +372,9 @@ importers:
       '@agent-os/event-bus':
         specifier: workspace:*
         version: link:../event-bus
+      '@agent-os/graphiti':
+        specifier: workspace:*
+        version: link:../graphiti
       '@agent-os/llm':
         specifier: workspace:*
         version: link:../llm
