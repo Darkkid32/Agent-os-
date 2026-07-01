@@ -1,7 +1,7 @@
 # Architecture overview
 
-> Phase 1.1 ships **engineering scaffolding only** — no business logic. This
-> document describes the *shape* of the system so Phase 2 lands coherently.
+> Agent OS is a runtime and operations platform for production AI agents. This
+> document describes the current shape of the system.
 
 ## Vision
 
@@ -29,7 +29,7 @@ Concretely, Agent OS:
                 └──────────────────────────────────────────────────┘
                                   │
                 ┌─────────────────┼──────────────────┐
-   Domain       │      ui       adapters-sdk       adapters         │
+   Domain       │      ui                    adapters         │
                 └─────────────────┼──────────────────┘
                                   │
                 ┌─────────┬───────┴──────┬─────────┬──────────────┐
@@ -45,7 +45,7 @@ Concretely, Agent OS:
 runtime, observability, event-bus** — *never* on every package. See
 [`dependency-rules.md`](./dependency-rules.md).
 
-## Runtime topology (Phase 2 target)
+## Runtime topology
 
 ```
    ┌────────────┐    HTTP/JSON     ┌─────────┐
@@ -68,7 +68,7 @@ runtime, observability, event-bus** — *never* on every package. See
 ```
 
 `services` (DB + cache) live behind `adapters` and are accessed through the
-`adapters-sdk` contract. The dashboard never talks to the database directly —
+adapter contracts. The dashboard never talks to the database directly —
 it goes through the API.
 
 ## Quality attributes
@@ -97,10 +97,10 @@ it goes through the API.
 | ------------- | -------------- | ----------------- |
 | Workflow runs | Postgres       | `memory` adapter  |
 | Event stream  | Redis Streams  | `event-bus` impl  |
-| LLM cache     | Redis + TTL    | `adapters/llm`    |
+| LLM cache     | Redis + TTL    | `llm`              |
 | Traces        | OTLP collector | `observability`   |
 
-## Non-goals (Phase 1 + Phase 2)
+## Non-goals
 
 - Multi-tenant isolation.
 - GPU pooling / inference scheduling.

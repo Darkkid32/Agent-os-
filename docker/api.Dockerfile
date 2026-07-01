@@ -36,7 +36,6 @@ COPY packages/ui/package.json       ./packages/ui/
 COPY packages/hermes/package.json   ./packages/hermes/
 COPY packages/plugins/package.json  ./packages/plugins/
 COPY packages/plugin-sdk/package.json ./packages/plugin-sdk/
-COPY packages/agents/package.json   ./packages/agents/
 COPY packages/adapters-cli/package.json ./packages/adapters-cli/
 COPY packages/adapters-discord/package.json ./packages/adapters-discord/
 COPY packages/adapters-telegram/package.json ./packages/adapters-telegram/

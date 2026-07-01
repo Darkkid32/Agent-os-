@@ -62,9 +62,6 @@ importers:
       '@agent-os/auth':
         specifier: workspace:*
         version: link:../../packages/auth
-      '@agent-os/config':
-        specifier: workspace:*
-        version: link:../../packages/config
       '@agent-os/core':
         specifier: workspace:*
         version: link:../../packages/core
@@ -77,9 +74,6 @@ importers:
       '@agent-os/runtime':
         specifier: workspace:*
         version: link:../../packages/runtime
-      '@agent-os/shared':
-        specifier: workspace:*
-        version: link:../../packages/shared
       '@fastify/cors':
         specifier: ^10.0.1
         version: 10.1.0
@@ -92,12 +86,6 @@ importers:
       fastify:
         specifier: ^5.0.0
         version: 5.8.5
-      pino:
-        specifier: ^9.5.0
-        version: 9.14.0
-      zod:
-        specifier: ^3.23.8
-        version: 3.25.76
     devDependencies:
       '@types/node':
         specifier: ^20.14.10
@@ -111,21 +99,9 @@ importers:
 
   apps/dashboard:
     dependencies:
-      '@agent-os/api':
-        specifier: workspace:*
-        version: link:../api
-      '@agent-os/core':
-        specifier: workspace:*
-        version: link:../../packages/core
-      '@agent-os/shared':
-        specifier: workspace:*
-        version: link:../../packages/shared
       '@agent-os/ui':
         specifier: workspace:*
         version: link:../../packages/ui
-      clsx:
-        specifier: ^2.1.1
-        version: 2.1.1
       next:
         specifier: ^14.2.13
         version: 14.2.35(@opentelemetry/api@1.9.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -383,6 +359,12 @@ importers:
       '@agent-os/event-bus':
         specifier: workspace:*
         version: link:../event-bus
+      '@agent-os/llm':
+        specifier: workspace:*
+        version: link:../llm
+      '@agent-os/memory':
+        specifier: workspace:*
+        version: link:../memory
       '@agent-os/observability':
         specifier: workspace:*
         version: link:../observability

@@ -1,7 +1,7 @@
-# API surface (Phase 1.1)
+# API surface
 
-This document describes the public HTTP surface the API exposes today and the
-contracts Phase 2 will land.
+This document describes the public HTTP surface the API exposes and the
+contracts planned for future phases.
 
 ## Conventions
 
@@ -31,8 +31,8 @@ must define an input schema in `@agent-os/shared` and a typed handler in
 
 ### Versioning
 
-The HTTP path embeds a single major version. Phase 2 introduces `/v1/`.
-Phase 1.1 ships only the version-less endpoints listed below.
+The HTTP path embeds a single major version (`/v1/`). Version-less endpoints
+(`GET /health`, `GET /version`) are service-level identity and liveness.
 
 ### Idempotency
 
@@ -41,8 +41,9 @@ Phase 2. Replays use the cached response.
 
 ### Authentication
 
-Phase 1.1 does not authenticate. Phase 2 introduces bearer tokens and rotates
-them through `@agent-os/api`'s secrets loader.
+Authentication is provided by `@agent-os/auth` with API key and bearer token
+providers. See [security/authentication.md](../security/authentication.md) for
+details.
 
 ## Endpoints
 

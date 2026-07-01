@@ -2,7 +2,7 @@
   "name": "@agent-os/hermes",
   "version": "1.0.0",
   "private": true,
-  "description": "Hermes integration layer placeholder. Implementation ships in Phase 2.",
+  "description": "Hermes integration layer — lifecycle, execution engine, plugin loading, and module orchestration.",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",

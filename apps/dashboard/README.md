@@ -8,6 +8,11 @@ Next.js-based operator dashboard.
 pnpm --filter @agent-os/dashboard dev
 ```
 
-## Status
+## Pages
 
-Phase 1.1 — landing page only. Real surfaces land in Phase 2+.
+- `/` — Live dashboard overview with real-time polling.
+- `/status` — System status and lifecycle phase.
+- `/health` — Per-module health grid.
+- `/modules` — Registered modules list.
+- `/config` — Configuration key-value viewer.
+- `/version` — Version info.

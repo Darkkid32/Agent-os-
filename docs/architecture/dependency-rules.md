@@ -12,8 +12,8 @@ package in a higher-numbered layer.
 | Layer | Packages |
 | ----- | -------- |
 | 1 — Foundation | `core`, `shared` |
-| 2 — Platform | `event-bus`, `memory`, `runtime`, `workflow`, `observability`, `config`, `auth`, `plugins` |
-| 3 — Domain | `agents`, `plugin-sdk`, `adapters`, `ui` |
+| 2 — Platform | `event-bus`, `llm`, `memory`, `runtime`, `workflow`, `observability`, `config`, `auth`, `plugins` |
+| 3 — Domain | `agents`, `plugin-sdk`, `ui`, `adapters-cli`, `adapters-discord`, `adapters-email`, `adapters-mcp`, `adapters-telegram`, `adapters-webhook`, `adapters-whatsapp` |
 | 4 — Surfaces | `hermes`, `benchmarks` |
 
 In addition:
@@ -25,15 +25,15 @@ In addition:
 
 - `hermes` is the top-level integration layer that orchestrates agents,
   workflows, memory and adapters. Every dependency on `hermes` is a coupling
-  that defeats the layering and makes Phase 2 impossible to compose. The
-  rule **"Hermes must not directly depend on every package"** is enforced by
-  inspection — `hermes` is allowed to depend on `core`, `shared`, `runtime`,
-  `observability`, and `event-bus` for the eventual integration — but never
-  on `adapters`, `memory`, or `agents` directly.
+  that defeats the layering. The rule **"Hermes must not directly depend on
+  every package"** is enforced by inspection — `hermes` is allowed to depend
+  on `core`, `shared`, `runtime`, `observability`, `event-bus`, `llm`, and
+  `memory` for the eventual integration — but never on `adapters` or `agents`
+  directly.
 
 - `adapters` are the only packages allowed to depend on concrete third-party
-  SDKs (HTTP clients, vector stores, etc.). `plugin-sdk` exports the contract
-  third parties implement.
+  SDKs (HTTP clients, vector stores, etc.). Each adapter package is
+  self-contained with its own commands, types, and formatting.
 
 - `ui` and `apps/dashboard` are the only nodes allowed to depend on React.
   Every other package is headless.
@@ -45,18 +45,22 @@ In addition:
 | `core`      | _(none)_                                                           |
 | `shared`    | `core`                                                             |
 | `event-bus` | `core`                                                             |
-| `memory`    | `core`                                                             |
+| `llm`       | `core`, `config`, `observability`                                  |
+| `memory`    | `core`, `observability`                                            |
 | `runtime`   | `core`, `observability`                                            |
 | `workflow`  | `core`                                                             |
 | `agents`    | `core`, `runtime`                                                  |
-| `adapters-sdk` | `core`                                                          |
-| `adapters`  | `core`, `adapters-sdk`                                             |
 | `observability` | `core`                                                         |
-| `config`     | `core`, `observability`                                            |
+| `config`    | `core`, `observability`                                            |
+| `auth`      | `core`, `observability`                                            |
+| `plugins`   | `core`, `event-bus`, `observability`                               |
+| `plugin-sdk`| `core`, `plugins`                                                  |
 | `ui`        | _(none — only Tailwind + React)_                                   |
-| `hermes`    | `core`, `runtime`, `observability`, `event-bus`                    |
-| `apps/api`  | `core`, `shared`, `runtime`, `observability`, `config`, `auth`     |
-| `apps/dashboard` | `core`, `shared`, `ui`                                       |
+| `adapters-*`| `core`, `hermes`, `observability`                                  |
+| `hermes`    | `core`, `shared`, `runtime`, `observability`, `event-bus`, `llm`, `memory` |
+| `benchmarks`| `core`, `auth`, `config`, `hermes`, `observability`, `plugins`, `plugin-sdk`, `runtime` |
+| `apps/api`  | `core`, `shared`, `runtime`, `observability`, `config`, `auth`, `hermes` |
+| `apps/dashboard` | `ui`                                                          |
 
 ## Enforcement
 
@@ -75,6 +79,5 @@ Three mechanisms keep the graph honest:
 - An `adapters/*` package importing from `agents/*`. Adapters interact with
   agents through the port defined by `runtime` — never directly.
 - Picking up React anywhere except `ui` and the dashboard.
-- Using `luxon`, `dayjs`, or any date library — `_ISO_8601` strings only.
 - Importing from `dist/` paths of another package. Always import via the
   public package name (`@agent-os/core`).

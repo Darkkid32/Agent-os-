@@ -6,7 +6,7 @@ Accepted (Phase 1.1).
 
 ## Context
 
-Agent OS has 12 packages; without a dependency rule set, refactor friction
+Agent OS has 25+ packages; without a dependency rule set, refactor friction
 grows quadratically. We need a deterministic graph where:
 
 - Foundation packages (`core`, `shared`) cannot accidentally depend on
@@ -21,10 +21,10 @@ Adopt the four-layer model documented in
 [`docs/architecture/dependency-rules.md`](../architecture/dependency-rules.md):
 
 1. **Foundation** — `core`, `shared`.
-2. **Platform** — `event-bus`, `memory`, `runtime`, `workflow`,
-   `observability`.
-3. **Domain** — `agents`, `adapters-sdk`, `adapters`, `ui`.
-4. **Surfaces** — `hermes`.
+2. **Platform** — `event-bus`, `llm`, `memory`, `runtime`, `workflow`,
+   `observability`, `config`, `auth`, `plugins`.
+3. **Domain** — `agents`, `plugin-sdk`, `ui`, and 7 adapter packages.
+4. **Surfaces** — `hermes`, `benchmarks`.
 
 Dependencies flow only downward. `apps/api` and `apps/dashboard` are treated
 as layer 4 surfaces with reduced reach.
@@ -43,7 +43,7 @@ as layer 4 surfaces with reduced reach.
 {
   "agent-os": {
     "layer": 4,           // 1 = foundation, 2 = platform, …
-    "audience": "internal" // or "public" for adapters-sdk/hermes
+    "audience": "internal" // or "public" for hermes
   }
 }
 ```

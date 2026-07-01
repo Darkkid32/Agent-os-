@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  transpilePackages: ['@agent-os/ui', '@agent-os/shared', '@agent-os/core'],
+  transpilePackages: ['@agent-os/ui'],
   eslint: {
     dirs: ['src'],
   },

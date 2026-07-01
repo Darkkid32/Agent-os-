@@ -14,7 +14,6 @@ flowchart TB
 
     subgraph Domain
         Ui[ui<br/>React + Tailwind]
-        AdaptersSDK[adapters-sdk<br/>SDK contract]
         Adapters[adapters<br/>1st-party]
     end
 
@@ -38,25 +37,30 @@ flowchart TB
     Observability --> Core
 
     %% Domain
-    Adapters --> AdaptersSDK
     Adapters --> Core
-    AdaptersSDK --> Core
+
+    %% Platform additions
+    LLM[llm<br/>provider abstraction] --> Core
+    Auth[auth<br/>API keys & tokens] --> Core
+    Config[config<br/>validation] --> Core
+    Plugins[plugins<br/>platform] --> Core
 
     %% Surfaces
     Hermes --> Runtime
     Hermes --> Observability
     Hermes --> EventBus
     Hermes --> Core
+    Hermes --> LLM
+    Hermes --> Memory
 
     %% Apps
     Api --> Shared
     Api --> Runtime
     Api --> Observability
-    Dashboard --> Shared
+    Api --> Core
+    Api --> Auth
+    Api --> Hermes
     Dashboard --> Ui
-
-    %% Domains that consume Foundation
-    Ui --> Shared
 
     %% Class definitions
     classDef foundation fill:#fef3c7,stroke:#b45309,color:#1f2937
@@ -66,7 +70,7 @@ flowchart TB
     classDef app fill:#fee2e2,stroke:#b91c1c,color:#1f2937
 
     class Core,Shared foundation
-    class EventBus,Memory,Runtime,Workflow,Observability platform
-    class Ui,AdaptersSDK,Adapters domain
+    class EventBus,Memory,Runtime,Workflow,Observability,LLM,Auth,Config,Plugins platform
+    class Ui,Adapters domain
     class Hermes surface
     class Api,Dashboard app

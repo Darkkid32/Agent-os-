@@ -8,11 +8,8 @@ Fastify-based HTTP API for Agent OS.
 pnpm --filter @agent-os/api dev
 ```
 
-## Endpoints (Phase 1.1)
+## Endpoints
 
-- `GET /health` — liveness.
+- `GET /health` — liveness, readiness, and diagnostics.
 - `GET /version` — service identity.
-
-## Status
-
-Scaffolding only. Real API surface lands in Phase 2.
+- `GET /v1/*` — Hermes kernel REST routes (status, modules, config, health, plugins).
