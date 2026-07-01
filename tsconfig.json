@@ -28,6 +28,8 @@
       "@agent-os/ui/*": ["packages/ui/src/*"],
       "@agent-os/hermes": ["packages/hermes/src/index.ts"],
       "@agent-os/hermes/*": ["packages/hermes/src/*"],
+      "@agent-os/llm": ["packages/llm/src/index.ts"],
+      "@agent-os/llm/*": ["packages/llm/src/*"],
       "@agent-os/plugin-sdk": ["packages/plugin-sdk/src/index.ts"],
       "@agent-os/plugin-sdk/*": ["packages/plugin-sdk/src/*"],
       "@agent-os/benchmarks": ["packages/benchmarks/src/index.ts"],

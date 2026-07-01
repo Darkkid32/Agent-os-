@@ -30,6 +30,7 @@ const PACKAGE_SLUGS = [
   'observability',
   'config',
   'auth',
+  'llm',
   'agents',
   'ui',
   'hermes',
