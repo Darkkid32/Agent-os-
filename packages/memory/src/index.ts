@@ -1,27 +1,142 @@
 /**
- * @agent-os/memory
+ * @agent-os/memory — Memory retrieval framework
  *
- * Memory store contracts. Phase 1.1 ships the interface only.
+ * Provider-independent memory with ranking, filtering, and policies.
+ * Memory is a retrieval service, NOT a database.
+ *
+ * Layer: 2 (Platform)
  */
 
-import type { Identifier, Result, Timestamp } from '@agent-os/core';
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
 
-export const PACKAGE_NAME = '@agent-os/memory' as const;
-export const PACKAGE_VERSION = '1.0.0' as const;
+export type {
+  MemoryId,
+  MemoryScope,
+  MemorySource,
+  MemoryMetadata,
+  MemoryRecord,
+  MemoryChunk,
+  MemoryQuery,
+  MemoryScore,
+  MemoryResult,
+  MemoryPolicy,
+  MemoryStore,
+  MemoryFilter,
+  MemoryProvider,
+  MemoryRetrievalContext,
+} from './MemoryTypes.js';
 
-export type MemoryId = Identifier<'MemoryId'>;
+// ---------------------------------------------------------------------------
+// Errors
+// ---------------------------------------------------------------------------
 
-export interface MemoryRecord {
-  readonly id: MemoryId;
-  readonly namespace: string;
-  readonly key: string;
-  readonly value: unknown;
-  readonly createdAt: Timestamp;
-  readonly updatedAt: Timestamp;
-}
+export {
+  MemoryError,
+  MemoryNotFoundError,
+  MemoryStoreFailedError,
+  MemoryRetrievalFailedError,
+  MemoryProviderUnavailableError,
+  MemoryValidationFailedError,
+  MemoryDuplicateError,
+  MemoryQuotaExceededError,
+  MemoryPolicyViolationError,
+  MemoryIndexFailedError,
+  isMemoryError,
+} from './MemoryErrors.js';
+export type { MemoryErrorCode } from './MemoryErrors.js';
 
-export interface MemoryStore {
-  readonly get: (namespace: string, key: string) => Promise<Result<MemoryRecord | null>>;
-  readonly put: (record: MemoryRecord) => Promise<Result<void>>;
-  readonly delete: (namespace: string, key: string) => Promise<Result<void>>;
-}
+// ---------------------------------------------------------------------------
+// Provider
+// ---------------------------------------------------------------------------
+
+export { InMemoryProvider } from './MemoryProvider.js';
+
+// ---------------------------------------------------------------------------
+// Registry
+// ---------------------------------------------------------------------------
+
+export { MemoryProviderRegistry } from './MemoryRegistry.js';
+
+// ---------------------------------------------------------------------------
+// Filters
+// ---------------------------------------------------------------------------
+
+export {
+  filterByPredicate,
+  filterByScope,
+  filterByPluginId,
+  filterByUserId,
+  filterByProjectId,
+  filterByTags,
+  filterByImportance,
+  excludeReadOnly,
+  filterByMetadata,
+  applyFilter,
+  queryToFilter,
+} from './MemoryFilters.js';
+
+// ---------------------------------------------------------------------------
+// Ranking
+// ---------------------------------------------------------------------------
+
+export {
+  rankMemories,
+  cosineSimilarity,
+  deduplicateScores,
+  calculateRelevance,
+  calculateImportance,
+  calculateRecency,
+  calculateSourcePriority,
+} from './MemoryRanking.js';
+export type { RankingOptions } from './MemoryRanking.js';
+
+// ---------------------------------------------------------------------------
+// Policies
+// ---------------------------------------------------------------------------
+
+export {
+  DEFAULT_POLICIES,
+  getDefaultPolicy,
+  isExpired,
+  filterExpired,
+  isPinned,
+  calculateEvictionCount,
+  selectEvictionCandidates,
+  canCreate,
+} from './MemoryPolicies.js';
+
+// ---------------------------------------------------------------------------
+// Indexer
+// ---------------------------------------------------------------------------
+
+export { MemoryIndexer } from './MemoryIndexer.js';
+export type { MemoryIndexerOptions } from './MemoryIndexer.js';
+
+// ---------------------------------------------------------------------------
+// Retriever
+// ---------------------------------------------------------------------------
+
+export { MemoryRetriever } from './MemoryRetriever.js';
+export type { MemoryRetrieverOptions } from './MemoryRetriever.js';
+
+// ---------------------------------------------------------------------------
+// Observability
+// ---------------------------------------------------------------------------
+
+export { MemoryObservability } from './MemoryObservability.js';
+export type { MemoryEventType, MemoryEvent, MemoryEventHandler } from './MemoryObservability.js';
+
+// ---------------------------------------------------------------------------
+// Context
+// ---------------------------------------------------------------------------
+
+export { MemoryContext } from './MemoryContext.js';
+
+// ---------------------------------------------------------------------------
+// Manager
+// ---------------------------------------------------------------------------
+
+export { MemoryManager } from './MemoryManager.js';
+export type { MemoryManagerOptions, CreateMemoryInput } from './MemoryManager.js';
