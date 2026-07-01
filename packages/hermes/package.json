@@ -47,6 +47,8 @@
   "dependencies": {
     "@agent-os/core": "workspace:*",
     "@agent-os/event-bus": "workspace:*",
+    "@agent-os/llm": "workspace:*",
+    "@agent-os/memory": "workspace:*",
     "@agent-os/observability": "workspace:*",
     "@agent-os/runtime": "workspace:*",
     "zod": "^3.23.8"
